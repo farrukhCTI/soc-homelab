@@ -1,0 +1,7 @@
+# Docker volumes
+docker/*/data/
+
+# Secrets (we track CLAUDE.md but be careful with real creds in production)
+*.key
+*.pem
+*.crt
