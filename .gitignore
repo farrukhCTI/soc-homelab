@@ -5,3 +5,7 @@ docker/*/data/
 *.key
 *.pem
 *.crt
+
+# Environment files with secrets
+.env
+*.env
