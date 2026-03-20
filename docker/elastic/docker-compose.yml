@@ -8,7 +8,6 @@ services:
       - xpack.security.http.ssl.enabled=false
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - ES_JAVA_OPTS=-Xms2g -Xmx2g
-      - xpack.encryptedSavedObjects.encryptionKey=${ES_ENCRYPTION_KEY}
     ports:
       - "9200:9200"
     volumes:
@@ -23,10 +22,10 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
-      - xpack.security.encryptionKey=${KIBANA_ENCRYPTION_KEY}
-      - xpack.encryptedSavedObjects.encryptionKey=${KIBANA_SO_ENCRYPTION_KEY}
-      - xpack.reporting.encryptionKey=${KIBANA_REPORTING_KEY}
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD} 
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_SO_ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_KEY}
     ports:
       - "5601:5601"
     depends_on:

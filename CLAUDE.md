@@ -1,10 +1,10 @@
 # SOC Homelab - Session Context
-Last updated: 2026-03-20 (Friday, ~07:30 PKT)
+Last updated: 2026-03-20 (Friday, ~10:30 PKT)
 
 ---
 
 ## Project Goal
-Building SOC + CTI homelab targeting IT Butler Islamabad (SOC Analyst L1, requires Elastic SIEM) and Pakistan SOC market.
+Building SOC + CTI homelab targeting Pakistan SOC market (IT Butler Islamabad primary target, SOC Analyst L1).
 GitHub: https://github.com/farrukhCTI/soc-homelab
 
 ---
@@ -12,219 +12,127 @@ GitHub: https://github.com/farrukhCTI/soc-homelab
 ## Hardware
 
 ### Node 1: Windows Dell Inspiron 3593 (SOC Core)
-- CPU: i5-1035G1 (4c/8t, turbo 3.6GHz, Ice Lake 10nm)
-- RAM: 16GB DDR4 dual channel
-- Storage: WD 1TB HDD (E:\ project) + ADATA SX6000PNP 238GB NVMe (C:\)
-- NIC: Realtek RTL8136 ethernet MAC: 98:E7:43:2E:73:AB
-- OS: Windows 11 Pro Build 26200.7922
+- CPU: i5-1035G1 (4c/8t)
+- RAM: 16GB DDR4
+- Storage: WD 1TB HDD (E:\ project) + ADATA 238GB NVMe (C:\)
+- NIC ethernet MAC: 98:E7:43:2E:73:AB
+- OS: Windows 11 Pro
 - Project path: E:\soc-homelab
-- IP: 192.168.100.143 (DHCP reservation locked)
+- IP: 192.168.100.143 (DHCP locked)
 
 ### Node 2: Dell E7250 (Proxmox Host)
 - CPU: i5-5300U (2c/4t)
 - RAM: 8GB
-- OS: Proxmox VE 9.1.6 (Debian Trixie, kernel 6.17.2-1-pve)
-- IP: 192.168.100.2 (DHCP reservation locked)
-- MAC (ethernet nic0): 34:E6:D7:88:7D:B0
+- OS: Proxmox VE 9.1.6 (Debian Trixie)
+- IP: 192.168.100.2 (DHCP locked)
 - Proxmox web UI: https://192.168.100.2:8006
-- Lid close: ignore (headless, on UPS socket)
-- Status: ACTIVE
+- Lid close: ignored, running headlessly on UPS socket
 
 ---
 
 ## Router
 - Model: Huawei EG8145V5
-- Admin panel: http://192.168.100.1
-- Login: telecomadmin / admintelecom
+- Admin: http://192.168.100.1 (telecomadmin / admintelecom)
 - Subnet: 192.168.100.0/24
-- Gateway: 192.168.100.1
 
-### DHCP Reservations (ALL CONFIGURED)
-| MAC | IP | Description |
+### DHCP Reservations
+| MAC | IP | Device |
 |---|---|---|
-| 34:E6:D7:88:7D:B0 | 192.168.100.2 | Proxmox-E7250 |
-| 98:E7:43:2E:73:AB | 192.168.100.143 | SOC-Core-Windows |
-| BC:24:11:6A:13:C2 | 192.168.100.144 | pfSense-WAN |
+| 34:E6:D7:88:7D:B0 | 192.168.100.2 | Proxmox |
+| 98:E7:43:2E:73:AB | 192.168.100.143 | Windows Dell |
+| BC:24:11:6A:13:C2 | 192.168.100.144 | pfSense WAN |
 
 ---
 
-## Node 1 Status: PARTIALLY COMPLETE
+## Credentials (KEEP LOCAL, NEVER PUSH TO GITHUB)
+| Service | User | Password |
+|---|---|---|
+| Proxmox | root | 92707927 |
+| pfSense web UI | admin | 92707927 |
+| Suricata-Zeek LXC SSH | root | 92707927 |
+| Elasticsearch | elastic | SOCHomelab2026! |
+| Kibana system | kibana_system | SOCHomelab2026! |
 
-### Completed
-- Git, Docker Desktop v29.2.1, WSL2 (10GB cap)
-- Sysmon v15.15 with SwiftOnSecurity config
-- Elasticsearch 8.17.0 + Kibana 8.17.0 running in Docker
-- GitHub repo: https://github.com/farrukhCTI/soc-homelab
+---
+
+## Node 1: PARTIALLY COMPLETE
+
+### Running
+- Docker Desktop v29.2.1 (WSL2, 10GB cap)
+- Elasticsearch 8.17.0 + Kibana 8.17.0 in Docker
+- Sysmon v15.15 with SwiftOnSecurity config (installed, NOT yet shipping to Elastic)
 - Docker compose: E:\soc-homelab\docker\elastic\docker-compose.yml
-- kibana_system password set
-- Kibana accessible and showing Suricata data from Node 2
 
-### Known Issues on Node 1
-- vm.max_map_count resets on reboot. Fix:
+### Start Node 1 after reboot
 ```powershell
 wsl -d docker-desktop sysctl -w vm.max_map_count=262144
-```
-- Docker containers must be started manually after reboot:
-```powershell
 cd E:\soc-homelab
 docker compose -f docker/elastic/docker-compose.yml up -d
 ```
 
-### Pending on Node 1
-- Install Elastic Agent, enroll with Fleet (NEXT)
-- Sysmon log ingestion into Elastic SIEM
-- Enable prebuilt detection rules (Windows category)
-- Build first Kibana security dashboard
-- Custom MITRE ATT&CK detection rules
+### Pending
+- Elastic Agent install + Fleet enrollment (NEXT IMMEDIATE TASK)
+- Sysmon logs into Elastic SIEM
+- Prebuilt Windows detection rules
 - TheHive + Cortex in Docker
 - Shuffle SOAR in Docker
 - MISP in Docker
-- Wire automation: Elastic > Shuffle > VirusTotal > TheHive
-- QRadar CE via VirtualBox (on-demand)
+- Custom MITRE ATT&CK detection rules
 
 ---
 
-## Node 2 Status: PHASE 1 COMPLETE
+## Node 2: PHASE 1 COMPLETE
 
-### Proxmox Configuration: COMPLETE
-- Proxmox VE 9.1.6, enterprise repos disabled, no-subscription repo active
-- vmbr0: physical bridge, nic0, IP 192.168.100.2/24
-- vmbr1: internal LAN bridge, no physical port
-- Lid close ignored, running headlessly on UPS socket
-- Subscription nag removed
-
-### VMs and Containers
-
-#### VM 100: pfSense CE 2.8.1 - COMPLETE
+### VM 100: pfSense CE 2.8.1
 - Status: RUNNING
-- CPU: 2 cores, RAM: 1024MB, Disk: 16GB
-- WAN: vtnet0 on vmbr0, IP 192.168.100.144, MAC BC:24:11:6A:13:C2
-- LAN: vtnet1 on vmbr1, IP 10.0.20.1/24, MAC BC:24:11:D7:00:F9
+- RAM: 1024MB, Disk: 16GB
+- WAN: 192.168.100.144 (vmbr0), LAN: 10.0.20.1/24 (vmbr1)
 - Web UI: http://192.168.100.144
-- DNS: 8.8.8.8, 8.8.4.4, Timezone: Asia/Karachi
-- Hostname: pfsense.lab.local
-- LAN DHCP pool: 10.0.20.100 - 10.0.20.200
-- Firewall rule: WAN pass from 192.168.100.0/24 to WAN port 80
+- DNS: 8.8.8.8 / 8.8.4.4, Timezone: Asia/Karachi
 
-#### CT 101: suricata-zeek - COMPLETE
+### CT 101: suricata-zeek (Debian 12, privileged)
 - Status: RUNNING
-- OS: Debian 12 (privileged container)
-- CPU: 2 cores, RAM: 2048MB, Swap: 512MB, Disk: 8GB
-- eth0: vmbr0, IP 192.168.100.145/24 (management)
-- eth1: vmbr0, NO IP (promiscuous sniffing)
-- SSH: root@192.168.100.145 (password in private context)
-- LXC config: lxc.cap.drop:, lxc.cgroup2.devices.allow: a, lxc.mount.auto: proc:rw sys:rw, features: nesting=1
-- /etc/network/interfaces: eth1 configured as manual, brought up on boot
+- IP: 192.168.100.145
+- SSH: ssh root@192.168.100.145
+- eth0: management, eth1: promiscuous sniffing (no IP)
 
-##### Suricata: COMPLETE
-- Version: 6.0.10
-- Interface: eth1 (promiscuous)
-- Rules: ET Open ruleset, 49083 rules at /var/lib/suricata/rules/
+#### Suricata 6.0.10
+- Interface: eth1, ET Open rules (49,083)
 - EVE JSON: /var/log/suricata/eve.json
 - community-id: enabled
-- Service: enabled, running since 2026-03-18
+- Service: enabled + running
 
-##### Zeek: COMPLETE
-- Version: 8.1.1
-- Interface: eth1
+#### Zeek 8.1.1
+- Interface: eth1, standalone mode
 - Logs: /opt/zeek/logs/current/
-- Service: zeekctl deploy, standalone mode
-- PATH: /opt/zeek/bin added to /etc/profile
-- websockets: installed (pip3)
+- PATH: /opt/zeek/bin in /etc/profile
+- Service: zeekctl deploy
 
-##### Filebeat: COMPLETE
-- Version: 8.17.0 (matches Elasticsearch)
-- Modules enabled: suricata, zeek
+#### Filebeat 8.17.0
+- Modules: suricata + zeek enabled
 - Output: Elasticsearch at 192.168.100.143:9200
 - Kibana: 192.168.100.143:5601
-- Dashboards loaded: [Filebeat Suricata] Alert Overview, [Filebeat Suricata] Events Overview
-- Data flowing: 26,864+ documents in Elasticsearch
-- Service: enabled, running
-
-### Planned VMs/LXCs (remaining)
-- Nginx Proxy Manager LXC (256MB): clean URLs, use community helper script
-- Tailscale LXC (128MB): ZTNA remote access
-- Kali Linux VM (2GB, on-demand): attack simulations
-- Windows 10 VM: victim endpoint + future honeypot
+- Dashboards loaded: [Filebeat Suricata] Alert Overview + Events Overview
+- Status: 26,864+ documents in Elasticsearch, actively shipping
+- Service: enabled + running
 
 ---
 
 ## Full Pipeline Status
 ```
 Network traffic
-    > eth1 on suricata-zeek LXC
-    > Suricata (signature detection) + Zeek (behavioural analysis)
-    > EVE JSON + conn.log/dns.log/http.log etc
-    > Filebeat
-    > Elasticsearch 8.17.0 (Windows Dell Docker)
-    > Kibana dashboards [LIVE]
+  > eth1 promiscuous
+  > Suricata (49,083 ET rules) + Zeek (behavioural)
+  > EVE JSON + Zeek logs
+  > Filebeat
+  > Elasticsearch 8.17 (Windows Dell Docker)
+  > Kibana dashboards [LIVE]
 
-Sysmon (Windows Dell endpoint) [PENDING - NEXT]
-    > Elastic Agent
-    > Elasticsearch
-    > Kibana
+Sysmon (Windows Dell) [PENDING - NEXT]
+  > Elastic Agent + Fleet
+  > Elasticsearch
+  > Kibana
 ```
-
----
-
-## Full Target Architecture
-```
-WINDOWS DELL (SOC Core) - 192.168.100.143
-├── Sysmon v15.15 (installed, not yet shipping to Elastic)
-├── Docker: Elastic SIEM 8.17 (ES + Kibana) [RUNNING]
-├── Docker: TheHive + Cortex [planned]
-├── Docker: Shuffle SOAR [planned]
-├── Docker: MISP [planned]
-└── VirtualBox: QRadar CE [planned, on-demand]
-
-DELL E7250 (Proxmox) - 192.168.100.2
-├── VM 100: pfSense CE 2.8.1 [RUNNING]
-├── CT 101: suricata-zeek [RUNNING]
-│   ├── Suricata IDS [ACTIVE, shipping to Elastic]
-│   ├── Zeek NSM [ACTIVE, shipping to Elastic]
-│   └── Filebeat 8.17 [ACTIVE]
-├── Nginx Proxy Manager LXC [NEXT SESSION]
-├── Tailscale LXC [planned]
-├── Kali Linux VM [planned]
-└── Windows 10 VM [planned]
-```
-
----
-
-## Build Phases
-
-### Phase 1: Node 2 Foundation - COMPLETE
-- [x] Proxmox installed and configured
-- [x] pfSense VM running
-- [x] Suricata LXC with ET Open rules
-- [x] Zeek installed and running
-- [x] Filebeat shipping to Elastic
-- [x] Kibana dashboards live with real data
-
-### Phase 2: Node 1 SIEM - IN PROGRESS
-- [ ] Elastic Agent install + Fleet enrollment (NEXT)
-- [ ] Sysmon logs into Elastic
-- [ ] Suricata + Zeek already flowing
-- [ ] Prebuilt detection rules enabled
-- [ ] First unified Kibana dashboard
-
-### Phase 3: Detection Engineering
-- [ ] Custom MITRE ATT&CK rules (T1059.001, T1110, T1543.003, T1071)
-- [ ] Kali VM deployed
-- [ ] Attack simulations + detection verification
-
-### Phase 4: Case Management + Automation
-- [ ] TheHive + Cortex
-- [ ] Shuffle SOAR
-- [ ] MISP
-- [ ] Full automation pipeline
-
-### Phase 5: Advanced
-- [ ] Windows 10 victim VM + honeypot
-- [ ] QRadar CE
-- [ ] Claude API triage tooling
-- [ ] Nginx Proxy Manager (clean URLs)
-- [ ] Tailscale (remote access)
 
 ---
 
@@ -236,25 +144,55 @@ DELL E7250 (Proxmox) - 192.168.100.2
 | Router | http://192.168.100.1 |
 | Proxmox | https://192.168.100.2:8006 |
 | pfSense | http://192.168.100.144 |
-| Suricata-Zeek LXC SSH | ssh root@192.168.100.145 |
+| Suricata-Zeek SSH | ssh root@192.168.100.145 |
 
 ---
 
-## Next Session Checklist
-1. Start Docker on Windows Dell:
-   ```powershell
-   wsl -d docker-desktop sysctl -w vm.max_map_count=262144
-   cd E:\soc-homelab
-   docker compose -f docker/elastic/docker-compose.yml up -d
-   ```
-2. Install Elastic Agent on Windows Dell
-3. Enroll with Fleet in Kibana
-4. Configure Sysmon integration
-5. Verify Sysmon events in Kibana
-6. Enable prebuilt Windows detection rules
+## Remaining Build Plan
+
+### Phase 2: Endpoint Detection (START HERE)
+1. Install Elastic Agent on Windows Dell via Fleet in Kibana
+2. Enable Sysmon integration in Fleet policy
+3. Verify Sysmon events (process creation, network, registry) in Kibana
+4. Enable prebuilt Windows detection rules in Kibana Security
+
+### Phase 3: Detection Engineering
+5. Write 4 custom MITRE ATT&CK rules (T1059.001, T1110, T1543.003, T1071)
+6. Deploy Kali Linux VM on Proxmox
+7. Windows 10 victim VM with Sysmon
+8. Run attack simulations, verify detections fire end to end
+
+### Phase 4: Case Management + Automation
+9. TheHive + Cortex in Docker on Windows Dell
+10. Shuffle SOAR in Docker
+11. Wire: Elastic alert > Shuffle > VirusTotal > TheHive
+12. MISP for threat intel
+
+### Phase 5: Polish
+13. Nginx Proxy Manager LXC (clean URLs)
+14. Tailscale LXC (remote access)
+15. Suricata rule tuning
+16. ILM policies in Elasticsearch
+
+### Phase 6: Claude API Tooling
+17. ai_triage.py, ai_report_generator.py, ai_detection_advisor.py
 
 ---
 
-## Session Continuity
-Paste this file at the start of each new session.
-Keep passwords in local copy only, never push to GitHub.
+## Important Notes
+- docker-compose.yml uses .env file for passwords, .env is gitignored
+- git filter-repo was used to clean password history, force pushed clean
+- Proxmox subscription nag removed
+- pfSense WAN memory: 1024MB (FreeBSD reports inflated usage in Proxmox, actual is ~26%)
+- eth1 on suricata-zeek LXC must be brought up manually if LXC reboots (configured in /etc/network/interfaces)
+- Zeek PATH must be sourced: source /etc/profile or log out/in after LXC reboot
+
+---
+
+## How to Start Next Session
+Paste this file and say:
+"Continuing SOC homelab build. Everything is running. Next task is Elastic Agent + Fleet setup on Windows Dell. Kibana is at http://localhost:5601."
+
+### ILM Policies (COMPLETE)
+- homelab-network-logs: hot 5GB/7d, delete 14d (attached to filebeat-8.17.0)
+- homelab-endpoint-logs: hot 3GB/3d, delete 7d (ready for Elastic Agent endpoint data)
