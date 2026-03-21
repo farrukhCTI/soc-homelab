@@ -15,14 +15,18 @@ services:
     networks:
       - elastic
     restart: unless-stopped
-
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 6g
   kibana:
     image: docker.elastic.co/kibana/kibana:8.17.0
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD} 
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD}
       - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_SO_ENCRYPTION_KEY}
       - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_KEY}
@@ -33,9 +37,7 @@ services:
     networks:
       - elastic
     restart: unless-stopped
-
 volumes:
   es-data:
-
 networks:
   elastic:
