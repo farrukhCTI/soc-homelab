@@ -76,11 +76,12 @@ Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoin
 │
 └── Node 2: Proxmox (192.168.100.2)
     │
-    ├── VM 100: pfSense (Router + IDS)
+    ├── VM 100: pfSense (Router + IDS + NDR Sensor)
     │   ├── WAN  → 192.168.100.144 (vmbr0)
     │   ├── LAN  → 10.0.20.1/24   (vmbr1 - Victim Network)
     │   └── OPT1 → 10.0.30.1/24   (vmbr2 - Attack Network)
     │        └── Suricata (monitoring OPT1 / vtnet2)
+    │        └── Filebeat 7.14.0 (EVE JSON → ES :9200)
     │
     ├── VM 101: Kali Linux
     │   └── 10.0.30.10 (Attack Network - vmbr2)
