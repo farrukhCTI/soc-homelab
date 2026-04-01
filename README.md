@@ -38,7 +38,7 @@ Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoin
 
 - Built segmented lab where attack traffic must traverse a monitored interface (Suricata on OPT1)
 - Identified limitation of ET SCAN rules in internal traffic scenarios and engineered a custom detection rule (SID 9000001)
-- Created 95 Sysmon-based detection rules mapped to MITRE ATT&CK
+- Created 96 Sysmon-based detection rules mapped to MITRE ATT&CK
 - Verified real-time correlation between:
   - Network alerts (Suricata EVE JSON)
   - Endpoint telemetry (Sysmon via Elastic Agent)
@@ -124,10 +124,10 @@ Victim (10.0.20.10)
 ```
 Kali (10.0.30.10)
   → pfSense OPT1 (Suricata)
-  → EVE JSON (syslog)
-  → Elastic Agent (Node 1)
-  → Elasticsearch
-  → Kibana
+  → EVE JSON (file: /var/log/suricata/suricata_vtnet242556/eve.json)
+  → Filebeat 7.14.0 (standalone binary on pfSense)
+  → Elasticsearch :9200 (HTTP)
+  → Kibana (filebeat-* data view)
 ```
 
 ---
@@ -149,7 +149,7 @@ alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 any (
 
 ### Sysmon Detection Rules
 
-- 95 custom KQL-based detection rules
+- 96 custom KQL-based detection rules
 - Coverage across MITRE ATT&CK tactics
 
 Export:
