@@ -7,7 +7,7 @@ services:
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - ES_JAVA_OPTS=-Xms1536m -Xmx1536m
       - path.repo=/snapshots
     ports:
       - "9200:9200"
@@ -21,7 +21,7 @@ services:
       resources:
         limits:
           cpus: "2.0"
-          memory: 6g
+          memory: 3g
   kibana:
     image: docker.elastic.co/kibana/kibana:8.17.0
     container_name: kibana
