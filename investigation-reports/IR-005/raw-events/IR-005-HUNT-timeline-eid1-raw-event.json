@@ -1,0 +1,546 @@
+{
+  "_index": "logs-winlog.winlog-default",
+  "_id": "cFslTp0BuL2Ov6TVL43r",
+  "_version": 1,
+  "_ignored": [
+    "message.keyword"
+  ],
+  "_source": {
+    "@timestamp": "2026-04-02T12:22:21.613Z",
+    "winlog": {
+      "version": 5,
+      "event_data": {
+        "TerminalSessionId": "0",
+        "OriginalFileName": "TiWorker.exe",
+        "FileVersion": "10.0.19041.6465 (WinBuild.160101.0800)",
+        "Description": "Windows Modules Installer Worker",
+        "ProcessId": "8348",
+        "LogonGuid": "{c466df0a-024e-69cb-e703-000000000000}",
+        "ProcessGuid": "{c466df0a-5f7d-69ce-8a0a-000000000a00}",
+        "Image": "C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe",
+        "Company": "Microsoft Corporation",
+        "User": "NT AUTHORITY\\SYSTEM",
+        "Hashes": "MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F",
+        "ParentUser": "NT AUTHORITY\\SYSTEM",
+        "CurrentDirectory": "C:\\Windows\\system32\\",
+        "RuleName": "-",
+        "CommandLine": "C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding",
+        "ParentImage": "C:\\Windows\\System32\\svchost.exe",
+        "ParentProcessGuid": "{c466df0a-024e-69cb-0f00-000000000a00}",
+        "LogonId": "0x3e7",
+        "IntegrityLevel": "System",
+        "UtcTime": "2026-04-02 12:22:21.598",
+        "ParentCommandLine": "C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p",
+        "ParentProcessId": "780",
+        "Product": "Microsoft® Windows® Operating System"
+      },
+      "user": {
+        "domain": "NT AUTHORITY",
+        "name": "SYSTEM",
+        "type": "User",
+        "identifier": "S-1-5-18"
+      },
+      "provider_guid": "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}",
+      "record_id": 13061,
+      "process": {
+        "pid": 2276,
+        "thread": {
+          "id": 3884
+        }
+      },
+      "computer_name": "DESKTOP-MM1REM9",
+      "task": "Process Create (rule: ProcessCreate)",
+      "opcode": "Info",
+      "api": "wineventlog",
+      "channel": "Microsoft-Windows-Sysmon/Operational",
+      "event_id": "1",
+      "provider_name": "Microsoft-Windows-Sysmon"
+    },
+    "message": "Process Create:\nRuleName: -\nUtcTime: 2026-04-02 12:22:21.598\nProcessGuid: {c466df0a-5f7d-69ce-8a0a-000000000a00}\nProcessId: 8348\nImage: C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe\nFileVersion: 10.0.19041.6465 (WinBuild.160101.0800)\nDescription: Windows Modules Installer Worker\nProduct: Microsoft® Windows® Operating System\nCompany: Microsoft Corporation\nOriginalFileName: TiWorker.exe\nCommandLine: C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding\nCurrentDirectory: C:\\Windows\\system32\\\nUser: NT AUTHORITY\\SYSTEM\nLogonGuid: {c466df0a-024e-69cb-e703-000000000000}\nLogonId: 0x3E7\nTerminalSessionId: 0\nIntegrityLevel: System\nHashes: MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F\nParentProcessGuid: {c466df0a-024e-69cb-0f00-000000000a00}\nParentProcessId: 780\nParentImage: C:\\Windows\\System32\\svchost.exe\nParentCommandLine: C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p\nParentUser: NT AUTHORITY\\SYSTEM",
+    "host": {
+      "id": "c466df0a-5a17-4b86-8ff6-4d8edbf647a8",
+      "ip": [
+        "fe80::5e29:4f96:fa0a:5d6",
+        "10.0.20.10"
+      ],
+      "name": "desktop-mm1rem9",
+      "mac": [
+        "BC-24-11-9F-45-75"
+      ],
+      "hostname": "DESKTOP-MM1REM9",
+      "architecture": "x86_64",
+      "os": {
+        "version": "10.0",
+        "family": "windows",
+        "name": "Windows 10 Pro",
+        "kernel": "10.0.19041.6456 (WinBuild.160101.0800)",
+        "build": "19045.6466",
+        "type": "windows",
+        "platform": "windows"
+      }
+    },
+    "input": {
+      "type": "winlog"
+    },
+    "data_stream": {
+      "type": "logs",
+      "dataset": "winlog.winlog",
+      "namespace": "default"
+    },
+    "elastic_agent": {
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877",
+      "snapshot": false,
+      "version": "8.17.0"
+    },
+    "ecs": {
+      "version": "8.0.0"
+    },
+    "event": {
+      "kind": "event",
+      "provider": "Microsoft-Windows-Sysmon",
+      "action": "Process Create (rule: ProcessCreate)",
+      "dataset": "winlog.winlog",
+      "created": "2026-04-02T12:22:23.248Z",
+      "code": "1"
+    },
+    "log": {
+      "level": "information"
+    },
+    "agent": {
+      "version": "8.17.0",
+      "ephemeral_id": "fb428c44-a56b-4417-83a3-d061abc3e7a5",
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877",
+      "name": "DESKTOP-MM1REM9",
+      "type": "filebeat"
+    }
+  },
+  "fields": {
+    "agent.version.keyword": [
+      "8.17.0"
+    ],
+    "elastic_agent.version": [
+      "8.17.0"
+    ],
+    "host.name.keyword": [
+      "desktop-mm1rem9"
+    ],
+    "winlog.event_data.ProcessGuid": [
+      "{c466df0a-5f7d-69ce-8a0a-000000000a00}"
+    ],
+    "winlog.event_data.OriginalFileName.keyword": [
+      "TiWorker.exe"
+    ],
+    "event.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "host.hostname": [
+      "DESKTOP-MM1REM9"
+    ],
+    "host.mac": [
+      "BC-24-11-9F-45-75"
+    ],
+    "winlog.process.pid": [
+      2276
+    ],
+    "winlog.event_data.ParentImage": [
+      "C:\\Windows\\System32\\svchost.exe"
+    ],
+    "data_stream.namespace.keyword": [
+      "default"
+    ],
+    "winlog.event_data.ProcessId.keyword": [
+      "8348"
+    ],
+    "host.os.version": [
+      "10.0"
+    ],
+    "winlog.event_data.IntegrityLevel.keyword": [
+      "System"
+    ],
+    "agent.name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.User.keyword": [
+      "NT AUTHORITY\\SYSTEM"
+    ],
+    "winlog.event_data.UtcTime": [
+      "2026-04-02 12:22:21.598"
+    ],
+    "winlog.event_data.OriginalFileName": [
+      "TiWorker.exe"
+    ],
+    "winlog.event_data.Image.keyword": [
+      "C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe"
+    ],
+    "winlog.event_data.Company": [
+      "Microsoft Corporation"
+    ],
+    "winlog.event_data.RuleName": [
+      "-"
+    ],
+    "host.os.type": [
+      "windows"
+    ],
+    "winlog.event_data.CurrentDirectory.keyword": [
+      "C:\\Windows\\system32\\"
+    ],
+    "agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.User": [
+      "NT AUTHORITY\\SYSTEM"
+    ],
+    "input.type": [
+      "winlog"
+    ],
+    "winlog.event_data.ProcessGuid.keyword": [
+      "{c466df0a-5f7d-69ce-8a0a-000000000a00}"
+    ],
+    "host.architecture": [
+      "x86_64"
+    ],
+    "event.provider": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "event.code": [
+      "1"
+    ],
+    "winlog.event_data.FileVersion": [
+      "10.0.19041.6465 (WinBuild.160101.0800)"
+    ],
+    "agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.provider_name.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "winlog.event_data.UtcTime.keyword": [
+      "2026-04-02 12:22:21.598"
+    ],
+    "winlog.event_data.LogonGuid": [
+      "{c466df0a-024e-69cb-e703-000000000000}"
+    ],
+    "winlog.user.domain.keyword": [
+      "NT AUTHORITY"
+    ],
+    "winlog.event_data.LogonGuid.keyword": [
+      "{c466df0a-024e-69cb-e703-000000000000}"
+    ],
+    "winlog.event_data.Description": [
+      "Windows Modules Installer Worker"
+    ],
+    "winlog.api.keyword": [
+      "wineventlog"
+    ],
+    "winlog.process.thread.id": [
+      3884
+    ],
+    "input.type.keyword": [
+      "winlog"
+    ],
+    "data_stream.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "elastic_agent.version.keyword": [
+      "8.17.0"
+    ],
+    "host.ip": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "agent.type": [
+      "filebeat"
+    ],
+    "host.os.kernel.keyword": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "winlog.event_data.Hashes.keyword": [
+      "MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F"
+    ],
+    "data_stream.type.keyword": [
+      "logs"
+    ],
+    "winlog.api": [
+      "wineventlog"
+    ],
+    "winlog.user.identifier.keyword": [
+      "S-1-5-18"
+    ],
+    "winlog.user.type.keyword": [
+      "User"
+    ],
+    "event.provider.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "elastic_agent.snapshot": [
+      false
+    ],
+    "winlog.event_data.TerminalSessionId.keyword": [
+      "0"
+    ],
+    "host.id": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "winlog.event_data.ProcessId": [
+      "8348"
+    ],
+    "agent.type.keyword": [
+      "filebeat"
+    ],
+    "agent.ephemeral_id.keyword": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "agent.name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "elastic_agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.LogonId.keyword": [
+      "0x3e7"
+    ],
+    "winlog.user.name": [
+      "SYSTEM"
+    ],
+    "winlog.event_data.Image": [
+      "C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe"
+    ],
+    "event.action": [
+      "Process Create (rule: ProcessCreate)"
+    ],
+    "@timestamp": [
+      "2026-04-02T12:22:21.613Z"
+    ],
+    "winlog.channel": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.platform": [
+      "windows"
+    ],
+    "data_stream.dataset": [
+      "winlog.winlog"
+    ],
+    "winlog.user.name.keyword": [
+      "SYSTEM"
+    ],
+    "winlog.opcode": [
+      "Info"
+    ],
+    "agent.ephemeral_id": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "winlog.event_data.TerminalSessionId": [
+      "0"
+    ],
+    "winlog.event_id.keyword": [
+      "1"
+    ],
+    "winlog.event_data.LogonId": [
+      "0x3e7"
+    ],
+    "winlog.event_data.ParentProcessId": [
+      "780"
+    ],
+    "host.architecture.keyword": [
+      "x86_64"
+    ],
+    "winlog.event_data.ParentProcessGuid.keyword": [
+      "{c466df0a-024e-69cb-0f00-000000000a00}"
+    ],
+    "elastic_agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.provider_guid": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.provider_name": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "host.os.build.keyword": [
+      "19045.6466"
+    ],
+    "event.code.keyword": [
+      "1"
+    ],
+    "winlog.computer_name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.ParentUser.keyword": [
+      "NT AUTHORITY\\SYSTEM"
+    ],
+    "ecs.version.keyword": [
+      "8.0.0"
+    ],
+    "host.ip.keyword": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "winlog.record_id": [
+      13061
+    ],
+    "winlog.event_data.CommandLine": [
+      "C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding"
+    ],
+    "winlog.event_data.RuleName.keyword": [
+      "-"
+    ],
+    "event.kind.keyword": [
+      "event"
+    ],
+    "host.os.name": [
+      "Windows 10 Pro"
+    ],
+    "log.level": [
+      "information"
+    ],
+    "event.action.keyword": [
+      "Process Create (rule: ProcessCreate)"
+    ],
+    "host.id.keyword": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "host.name": [
+      "desktop-mm1rem9"
+    ],
+    "winlog.event_data.ParentProcessGuid": [
+      "{c466df0a-024e-69cb-0f00-000000000a00}"
+    ],
+    "event.kind": [
+      "event"
+    ],
+    "host.os.version.keyword": [
+      "10.0"
+    ],
+    "winlog.event_data.CommandLine.keyword": [
+      "C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding"
+    ],
+    "winlog.version": [
+      5
+    ],
+    "data_stream.type": [
+      "logs"
+    ],
+    "winlog.event_data.Description.keyword": [
+      "Windows Modules Installer Worker"
+    ],
+    "winlog.event_data.Product.keyword": [
+      "Microsoft® Windows® Operating System"
+    ],
+    "ecs.version": [
+      "8.0.0"
+    ],
+    "event.created": [
+      "2026-04-02T12:22:23.248Z"
+    ],
+    "host.hostname.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "agent.version": [
+      "8.17.0"
+    ],
+    "host.os.family": [
+      "windows"
+    ],
+    "winlog.event_data.ParentImage.keyword": [
+      "C:\\Windows\\System32\\svchost.exe"
+    ],
+    "log.level.keyword": [
+      "information"
+    ],
+    "winlog.event_data.ParentUser": [
+      "NT AUTHORITY\\SYSTEM"
+    ],
+    "winlog.computer_name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.ParentCommandLine.keyword": [
+      "C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p"
+    ],
+    "winlog.event_data.Company.keyword": [
+      "Microsoft Corporation"
+    ],
+    "host.os.build": [
+      "19045.6466"
+    ],
+    "winlog.user.type": [
+      "User"
+    ],
+    "host.os.kernel": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "host.os.name.keyword": [
+      "Windows 10 Pro"
+    ],
+    "winlog.event_data.Hashes": [
+      "MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F"
+    ],
+    "winlog.provider_guid.keyword": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.user.identifier": [
+      "S-1-5-18"
+    ],
+    "winlog.task": [
+      "Process Create (rule: ProcessCreate)"
+    ],
+    "winlog.task.keyword": [
+      "Process Create (rule: ProcessCreate)"
+    ],
+    "winlog.user.domain": [
+      "NT AUTHORITY"
+    ],
+    "host.mac.keyword": [
+      "BC-24-11-9F-45-75"
+    ],
+    "data_stream.namespace": [
+      "default"
+    ],
+    "winlog.event_data.IntegrityLevel": [
+      "System"
+    ],
+    "message": [
+      "Process Create:\nRuleName: -\nUtcTime: 2026-04-02 12:22:21.598\nProcessGuid: {c466df0a-5f7d-69ce-8a0a-000000000a00}\nProcessId: 8348\nImage: C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe\nFileVersion: 10.0.19041.6465 (WinBuild.160101.0800)\nDescription: Windows Modules Installer Worker\nProduct: Microsoft® Windows® Operating System\nCompany: Microsoft Corporation\nOriginalFileName: TiWorker.exe\nCommandLine: C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding\nCurrentDirectory: C:\\Windows\\system32\\\nUser: NT AUTHORITY\\SYSTEM\nLogonGuid: {c466df0a-024e-69cb-e703-000000000000}\nLogonId: 0x3E7\nTerminalSessionId: 0\nIntegrityLevel: System\nHashes: MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F\nParentProcessGuid: {c466df0a-024e-69cb-0f00-000000000a00}\nParentProcessId: 780\nParentImage: C:\\Windows\\System32\\svchost.exe\nParentCommandLine: C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p\nParentUser: NT AUTHORITY\\SYSTEM"
+    ],
+    "winlog.event_id": [
+      "1"
+    ],
+    "winlog.channel.keyword": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.family.keyword": [
+      "windows"
+    ],
+    "host.os.type.keyword": [
+      "windows"
+    ],
+    "host.os.platform.keyword": [
+      "windows"
+    ],
+    "winlog.event_data.ParentProcessId.keyword": [
+      "780"
+    ],
+    "winlog.event_data.FileVersion.keyword": [
+      "10.0.19041.6465 (WinBuild.160101.0800)"
+    ],
+    "winlog.event_data.CurrentDirectory": [
+      "C:\\Windows\\system32\\"
+    ],
+    "winlog.opcode.keyword": [
+      "Info"
+    ],
+    "winlog.event_data.ParentCommandLine": [
+      "C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p"
+    ],
+    "winlog.event_data.Product": [
+      "Microsoft® Windows® Operating System"
+    ],
+    "event.dataset": [
+      "winlog.winlog"
+    ]
+  },
+  "ignored_field_values": {
+    "message.keyword": [
+      "Process Create:\nRuleName: -\nUtcTime: 2026-04-02 12:22:21.598\nProcessGuid: {c466df0a-5f7d-69ce-8a0a-000000000a00}\nProcessId: 8348\nImage: C:\\Windows\\WinSxS\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe\nFileVersion: 10.0.19041.6465 (WinBuild.160101.0800)\nDescription: Windows Modules Installer Worker\nProduct: Microsoft® Windows® Operating System\nCompany: Microsoft Corporation\nOriginalFileName: TiWorker.exe\nCommandLine: C:\\Windows\\winsxs\\amd64_microsoft-windows-servicingstack_31bf3856ad364e35_10.0.19041.6465_none_7e0fb53c7c8be091\\TiWorker.exe -Embedding\nCurrentDirectory: C:\\Windows\\system32\\\nUser: NT AUTHORITY\\SYSTEM\nLogonGuid: {c466df0a-024e-69cb-e703-000000000000}\nLogonId: 0x3E7\nTerminalSessionId: 0\nIntegrityLevel: System\nHashes: MD5=5FC8E20C8411E81BA89579668F836B22,SHA256=67253ED6312D2BB54AB7A313E31C1C24F0E7E00C4B2ECC570C78D49F3F8F1539,IMPHASH=2409EC1E105B0DDA91B9CEBA0B44162F\nParentProcessGuid: {c466df0a-024e-69cb-0f00-000000000a00}\nParentProcessId: 780\nParentImage: C:\\Windows\\System32\\svchost.exe\nParentCommandLine: C:\\Windows\\system32\\svchost.exe -k DcomLaunch -p\nParentUser: NT AUTHORITY\\SYSTEM"
+    ]
+  }
+}

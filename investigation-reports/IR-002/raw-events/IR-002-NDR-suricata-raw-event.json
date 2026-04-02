@@ -1,0 +1,398 @@
+{
+  "_index": "filebeat-7.14.0-2026.04.02",
+  "_id": "p1uRTZ0BuL2Ov6TV7xZc",
+  "_version": 1,
+  "_ignored": [
+    "event.original.keyword"
+  ],
+  "_source": {
+    "agent": {
+      "hostname": "pfSense.home.arpa",
+      "name": "pfSense.home.arpa",
+      "id": "d82c68c8-1d44-42bf-ad76-020b8bff5f0c",
+      "type": "filebeat",
+      "ephemeral_id": "bf761c5e-a1e9-4e06-bf33-e203f5a03c8c",
+      "version": "7.14.0"
+    },
+    "log": {
+      "file": {
+        "path": "/var/log/suricata/suricata_vtnet242556/eve.json"
+      },
+      "offset": 192048
+    },
+    "destination": {
+      "address": "10.0.20.10",
+      "port": 245,
+      "bytes": 0,
+      "ip": "10.0.20.10",
+      "packets": 0
+    },
+    "source": {
+      "address": "10.0.30.10",
+      "port": 62738,
+      "bytes": 58,
+      "ip": "10.0.30.10",
+      "packets": 1
+    },
+    "fileset": {
+      "name": "eve"
+    },
+    "message": "",
+    "tags": [
+      "suricata",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb"
+    ],
+    "network": {
+      "community_id": "1:X9TBCfsoPFK4/glKfUSpgpx14oo=",
+      "bytes": 58,
+      "transport": "tcp",
+      "packets": 1
+    },
+    "input": {
+      "type": "log"
+    },
+    "@timestamp": "2026-04-02T09:41:40.068Z",
+    "ecs": {
+      "version": "1.10.0"
+    },
+    "service": {
+      "type": "suricata"
+    },
+    "host": {
+      "name": "pfSense.home.arpa"
+    },
+    "suricata": {
+      "eve": {
+        "in_iface": "vtnet2",
+        "event_type": "alert",
+        "alert": {
+          "signature_id": 9000001,
+          "rev": 1,
+          "gid": 1,
+          "signature": "LOCAL SCAN Kali SYN Sweep to Victim",
+          "category": ""
+        },
+        "stream": 0,
+        "flow_id": 1138948704518595,
+        "payload_printable": "",
+        "packet": "vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA==",
+        "flow": {
+          "src_ip": "10.0.30.10",
+          "src_port": 62738,
+          "dest_ip": "10.0.20.10",
+          "dest_port": 245
+        },
+        "pkt_src": "wire/pcap",
+        "packet_info": {
+          "linktype": 1
+        },
+        "direction": "to_server"
+      }
+    },
+    "event": {
+      "severity": 3,
+      "original": "{\"timestamp\":\"2026-04-02T09:41:40.068574+0000\",\"flow_id\":1138948704518595,\"in_iface\":\"vtnet2\",\"event_type\":\"alert\",\"src_ip\":\"10.0.30.10\",\"src_port\":62738,\"dest_ip\":\"10.0.20.10\",\"dest_port\":245,\"proto\":\"TCP\",\"pkt_src\":\"wire/pcap\",\"alert\":{\"action\":\"allowed\",\"gid\":1,\"signature_id\":9000001,\"rev\":1,\"signature\":\"LOCAL SCAN Kali SYN Sweep to Victim\",\"category\":\"\",\"severity\":3},\"direction\":\"to_server\",\"flow\":{\"pkts_toserver\":1,\"pkts_toclient\":0,\"bytes_toserver\":58,\"bytes_toclient\":0,\"start\":\"2026-04-02T09:41:40.068574+0000\",\"src_ip\":\"10.0.30.10\",\"dest_ip\":\"10.0.20.10\",\"src_port\":62738,\"dest_port\":245},\"payload_printable\":\"\",\"stream\":0,\"packet\":\"vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA==\",\"packet_info\":{\"linktype\":1}}",
+      "created": "2026-04-02T09:41:41.759Z",
+      "kind": "alert",
+      "module": "suricata",
+      "start": "2026-04-02T09:41:40.068Z",
+      "category": "network_traffic",
+      "dataset": "suricata.eve",
+      "outcome": "allowed"
+    }
+  },
+  "fields": {
+    "agent.version.keyword": [
+      "7.14.0"
+    ],
+    "event.category": [
+      "network_traffic"
+    ],
+    "host.name.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "event.category.keyword": [
+      "network_traffic"
+    ],
+    "event.dataset.keyword": [
+      "suricata.eve"
+    ],
+    "suricata.eve.packet_info.linktype": [
+      1
+    ],
+    "suricata.eve.packet.keyword": [
+      "vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA=="
+    ],
+    "event.outcome.keyword": [
+      "allowed"
+    ],
+    "suricata.eve.flow.dest_ip": [
+      "10.0.20.10"
+    ],
+    "agent.hostname.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "service.type": [
+      "suricata"
+    ],
+    "ecs.version.keyword": [
+      "1.10.0"
+    ],
+    "suricata.eve.alert.signature": [
+      "LOCAL SCAN Kali SYN Sweep to Victim"
+    ],
+    "event.kind.keyword": [
+      "alert"
+    ],
+    "source.ip": [
+      "10.0.30.10"
+    ],
+    "suricata.eve.flow.src_ip": [
+      "10.0.30.10"
+    ],
+    "agent.name": [
+      "pfSense.home.arpa"
+    ],
+    "destination.address": [
+      "10.0.20.10"
+    ],
+    "suricata.eve.event_type": [
+      "alert"
+    ],
+    "host.name": [
+      "pfSense.home.arpa"
+    ],
+    "network.community_id": [
+      "1:X9TBCfsoPFK4/glKfUSpgpx14oo="
+    ],
+    "suricata.eve.packet": [
+      "vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA=="
+    ],
+    "suricata.eve.alert.gid": [
+      1
+    ],
+    "event.kind": [
+      "alert"
+    ],
+    "suricata.eve.flow_id": [
+      1138948704518595
+    ],
+    "event.outcome": [
+      "allowed"
+    ],
+    "destination.address.keyword": [
+      "10.0.20.10"
+    ],
+    "event.severity": [
+      3
+    ],
+    "event.original": [
+      "{\"timestamp\":\"2026-04-02T09:41:40.068574+0000\",\"flow_id\":1138948704518595,\"in_iface\":\"vtnet2\",\"event_type\":\"alert\",\"src_ip\":\"10.0.30.10\",\"src_port\":62738,\"dest_ip\":\"10.0.20.10\",\"dest_port\":245,\"proto\":\"TCP\",\"pkt_src\":\"wire/pcap\",\"alert\":{\"action\":\"allowed\",\"gid\":1,\"signature_id\":9000001,\"rev\":1,\"signature\":\"LOCAL SCAN Kali SYN Sweep to Victim\",\"category\":\"\",\"severity\":3},\"direction\":\"to_server\",\"flow\":{\"pkts_toserver\":1,\"pkts_toclient\":0,\"bytes_toserver\":58,\"bytes_toclient\":0,\"start\":\"2026-04-02T09:41:40.068574+0000\",\"src_ip\":\"10.0.30.10\",\"dest_ip\":\"10.0.20.10\",\"src_port\":62738,\"dest_port\":245},\"payload_printable\":\"\",\"stream\":0,\"packet\":\"vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA==\",\"packet_info\":{\"linktype\":1}}"
+    ],
+    "source.packets": [
+      1
+    ],
+    "network.packets": [
+      1
+    ],
+    "suricata.eve.in_iface.keyword": [
+      "vtnet2"
+    ],
+    "agent.id.keyword": [
+      "d82c68c8-1d44-42bf-ad76-020b8bff5f0c"
+    ],
+    "fileset.name": [
+      "eve"
+    ],
+    "input.type": [
+      "log"
+    ],
+    "log.offset": [
+      192048
+    ],
+    "agent.hostname": [
+      "pfSense.home.arpa"
+    ],
+    "suricata.eve.in_iface": [
+      "vtnet2"
+    ],
+    "tags": [
+      "suricata",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb"
+    ],
+    "fileset.name.keyword": [
+      "eve"
+    ],
+    "destination.ip.keyword": [
+      "10.0.20.10"
+    ],
+    "agent.id": [
+      "d82c68c8-1d44-42bf-ad76-020b8bff5f0c"
+    ],
+    "source.port": [
+      62738
+    ],
+    "ecs.version": [
+      "1.10.0"
+    ],
+    "suricata.eve.flow.src_ip.keyword": [
+      "10.0.30.10"
+    ],
+    "event.created": [
+      "2026-04-02T09:41:41.759Z"
+    ],
+    "message.keyword": [
+      ""
+    ],
+    "suricata.eve.direction": [
+      "to_server"
+    ],
+    "event.module.keyword": [
+      "suricata"
+    ],
+    "agent.version": [
+      "7.14.0"
+    ],
+    "source.ip.keyword": [
+      "10.0.30.10"
+    ],
+    "destination.bytes": [
+      0
+    ],
+    "event.start": [
+      "2026-04-02T09:41:40.068Z"
+    ],
+    "suricata.eve.flow.dest_port": [
+      245
+    ],
+    "service.type.keyword": [
+      "suricata"
+    ],
+    "input.type.keyword": [
+      "log"
+    ],
+    "destination.port": [
+      245
+    ],
+    "network.community_id.keyword": [
+      "1:X9TBCfsoPFK4/glKfUSpgpx14oo="
+    ],
+    "suricata.eve.pkt_src.keyword": [
+      "wire/pcap"
+    ],
+    "tags.keyword": [
+      "suricata",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-City.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb",
+      "_geoip_database_unavailable_GeoLite2-ASN.mmdb"
+    ],
+    "source.address": [
+      "10.0.30.10"
+    ],
+    "suricata.eve.stream": [
+      0
+    ],
+    "source.address.keyword": [
+      "10.0.30.10"
+    ],
+    "destination.packets": [
+      0
+    ],
+    "suricata.eve.alert.category": [
+      ""
+    ],
+    "suricata.eve.event_type.keyword": [
+      "alert"
+    ],
+    "suricata.eve.alert.signature_id": [
+      9000001
+    ],
+    "agent.type": [
+      "filebeat"
+    ],
+    "event.module": [
+      "suricata"
+    ],
+    "suricata.eve.payload_printable": [
+      ""
+    ],
+    "network.bytes": [
+      58
+    ],
+    "log.file.path.keyword": [
+      "/var/log/suricata/suricata_vtnet242556/eve.json"
+    ],
+    "agent.type.keyword": [
+      "filebeat"
+    ],
+    "source.bytes": [
+      58
+    ],
+    "agent.ephemeral_id.keyword": [
+      "bf761c5e-a1e9-4e06-bf33-e203f5a03c8c"
+    ],
+    "suricata.eve.pkt_src": [
+      "wire/pcap"
+    ],
+    "suricata.eve.flow.src_port": [
+      62738
+    ],
+    "agent.name.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "suricata.eve.direction.keyword": [
+      "to_server"
+    ],
+    "network.transport.keyword": [
+      "tcp"
+    ],
+    "message": [
+      ""
+    ],
+    "suricata.eve.payload_printable.keyword": [
+      ""
+    ],
+    "destination.ip": [
+      "10.0.20.10"
+    ],
+    "suricata.eve.alert.signature.keyword": [
+      "LOCAL SCAN Kali SYN Sweep to Victim"
+    ],
+    "network.transport": [
+      "tcp"
+    ],
+    "@timestamp": [
+      "2026-04-02T09:41:40.068Z"
+    ],
+    "log.file.path": [
+      "/var/log/suricata/suricata_vtnet242556/eve.json"
+    ],
+    "agent.ephemeral_id": [
+      "bf761c5e-a1e9-4e06-bf33-e203f5a03c8c"
+    ],
+    "suricata.eve.alert.category.keyword": [
+      ""
+    ],
+    "suricata.eve.flow.dest_ip.keyword": [
+      "10.0.20.10"
+    ],
+    "suricata.eve.alert.rev": [
+      1
+    ],
+    "event.dataset": [
+      "suricata.eve"
+    ]
+  },
+  "ignored_field_values": {
+    "event.original.keyword": [
+      "{\"timestamp\":\"2026-04-02T09:41:40.068574+0000\",\"flow_id\":1138948704518595,\"in_iface\":\"vtnet2\",\"event_type\":\"alert\",\"src_ip\":\"10.0.30.10\",\"src_port\":62738,\"dest_ip\":\"10.0.20.10\",\"dest_port\":245,\"proto\":\"TCP\",\"pkt_src\":\"wire/pcap\",\"alert\":{\"action\":\"allowed\",\"gid\":1,\"signature_id\":9000001,\"rev\":1,\"signature\":\"LOCAL SCAN Kali SYN Sweep to Victim\",\"category\":\"\",\"severity\":3},\"direction\":\"to_server\",\"flow\":{\"pkts_toserver\":1,\"pkts_toclient\":0,\"bytes_toserver\":58,\"bytes_toclient\":0,\"start\":\"2026-04-02T09:41:40.068574+0000\",\"src_ip\":\"10.0.30.10\",\"dest_ip\":\"10.0.20.10\",\"src_port\":62738,\"dest_port\":245},\"payload_printable\":\"\",\"stream\":0,\"packet\":\"vCQRu1BWvCQREl4VCABFAAAsCHYAADcGNUMKAB4KCgAUCvUSAPUQFG7hAAAAAGACBADZFQAAAgQFtA==\",\"packet_info\":{\"linktype\":1}}"
+    ]
+  }
+}

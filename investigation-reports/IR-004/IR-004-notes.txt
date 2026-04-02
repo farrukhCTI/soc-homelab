@@ -1,0 +1,7 @@
+EID 11: update.hta created at 12:01:25 by cmd.exe
+EID 1: cmd.exe spawned by mshta.exe at 12:01:35 with CommandLine whoami >> out.txt
+ParentCommandLine: mshta C:\Users\Public\update.hta
+
+Set-MpPreference -DisableRealtimeMonitoring $true — blocked silently by Tamper Protection, no EID 13 generated
+reg add HKLM\SOFTWARE\Policies\Microsoft\Windows Defender DisableAntiSpyware — EID 13 fired at 17:18:17
+Working query: *Windows Defender* on TargetObject

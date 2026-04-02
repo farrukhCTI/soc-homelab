@@ -1,0 +1,511 @@
+{
+  "_index": "logs-winlog.winlog-default",
+  "_id": "YVsATp0BuL2Ov6TV83Cp",
+  "_version": 1,
+  "_ignored": [
+    "message.keyword"
+  ],
+  "_source": {
+    "@timestamp": "2026-04-02T11:42:47.088Z",
+    "event": {
+      "created": "2026-04-02T11:42:48.500Z",
+      "code": "3",
+      "kind": "event",
+      "provider": "Microsoft-Windows-Sysmon",
+      "action": "Network connection detected (rule: NetworkConnect)",
+      "dataset": "winlog.winlog"
+    },
+    "log": {
+      "level": "information"
+    },
+    "winlog": {
+      "channel": "Microsoft-Windows-Sysmon/Operational",
+      "task": "Network connection detected (rule: NetworkConnect)",
+      "api": "wineventlog",
+      "event_id": "3",
+      "opcode": "Info",
+      "provider_name": "Microsoft-Windows-Sysmon",
+      "computer_name": "DESKTOP-MM1REM9",
+      "provider_guid": "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}",
+      "version": 5,
+      "user": {
+        "domain": "NT AUTHORITY",
+        "name": "SYSTEM",
+        "type": "User",
+        "identifier": "S-1-5-18"
+      },
+      "event_data": {
+        "SourceIp": "10.0.20.10",
+        "DestinationIsIpv6": "false",
+        "ProcessGuid": "{c466df0a-5389-69ce-2b0a-000000000a00}",
+        "Image": "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe",
+        "DestinationPort": "8080",
+        "SourceIsIpv6": "false",
+        "ProcessId": "8448",
+        "UtcTime": "2026-04-02 11:42:42.991",
+        "DestinationPortName": "-",
+        "SourcePort": "50299",
+        "SourcePortName": "-",
+        "DestinationIp": "10.0.30.10",
+        "DestinationHostname": "-",
+        "Protocol": "tcp",
+        "Initiated": "true",
+        "RuleName": "Proxy",
+        "SourceHostname": "DESKTOP-MM1REM9.home.arpa",
+        "User": "DESKTOP-MM1REM9\\victim"
+      },
+      "process": {
+        "pid": 2276,
+        "thread": {
+          "id": 3092
+        }
+      },
+      "record_id": 12998
+    },
+    "data_stream": {
+      "type": "logs",
+      "dataset": "winlog.winlog",
+      "namespace": "default"
+    },
+    "agent": {
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877",
+      "ephemeral_id": "fb428c44-a56b-4417-83a3-d061abc3e7a5",
+      "name": "DESKTOP-MM1REM9",
+      "type": "filebeat",
+      "version": "8.17.0"
+    },
+    "ecs": {
+      "version": "8.0.0"
+    },
+    "message": "Network connection detected:\nRuleName: Proxy\nUtcTime: 2026-04-02 11:42:42.991\nProcessGuid: {c466df0a-5389-69ce-2b0a-000000000a00}\nProcessId: 8448\nImage: C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe\nUser: DESKTOP-MM1REM9\\victim\nProtocol: tcp\nInitiated: true\nSourceIsIpv6: false\nSourceIp: 10.0.20.10\nSourceHostname: DESKTOP-MM1REM9.home.arpa\nSourcePort: 50299\nSourcePortName: -\nDestinationIsIpv6: false\nDestinationIp: 10.0.30.10\nDestinationHostname: -\nDestinationPort: 8080\nDestinationPortName: -",
+    "host": {
+      "os": {
+        "version": "10.0",
+        "family": "windows",
+        "name": "Windows 10 Pro",
+        "kernel": "10.0.19041.6456 (WinBuild.160101.0800)",
+        "build": "19045.6466",
+        "type": "windows",
+        "platform": "windows"
+      },
+      "id": "c466df0a-5a17-4b86-8ff6-4d8edbf647a8",
+      "ip": [
+        "fe80::5e29:4f96:fa0a:5d6",
+        "10.0.20.10"
+      ],
+      "mac": [
+        "BC-24-11-9F-45-75"
+      ],
+      "name": "desktop-mm1rem9",
+      "hostname": "DESKTOP-MM1REM9",
+      "architecture": "x86_64"
+    },
+    "input": {
+      "type": "winlog"
+    },
+    "elastic_agent": {
+      "snapshot": false,
+      "version": "8.17.0",
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    }
+  },
+  "fields": {
+    "agent.version.keyword": [
+      "8.17.0"
+    ],
+    "elastic_agent.version": [
+      "8.17.0"
+    ],
+    "host.name.keyword": [
+      "desktop-mm1rem9"
+    ],
+    "winlog.event_data.ProcessGuid": [
+      "{c466df0a-5389-69ce-2b0a-000000000a00}"
+    ],
+    "event.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "host.hostname": [
+      "DESKTOP-MM1REM9"
+    ],
+    "host.mac": [
+      "BC-24-11-9F-45-75"
+    ],
+    "winlog.event_data.SourcePortName": [
+      "-"
+    ],
+    "winlog.process.pid": [
+      2276
+    ],
+    "data_stream.namespace.keyword": [
+      "default"
+    ],
+    "winlog.event_data.ProcessId.keyword": [
+      "8448"
+    ],
+    "host.os.version": [
+      "10.0"
+    ],
+    "winlog.event_data.DestinationPort": [
+      "8080"
+    ],
+    "agent.name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.User.keyword": [
+      "DESKTOP-MM1REM9\\victim"
+    ],
+    "winlog.event_data.UtcTime": [
+      "2026-04-02 11:42:42.991"
+    ],
+    "winlog.event_data.Image.keyword": [
+      "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe"
+    ],
+    "winlog.event_data.RuleName": [
+      "Proxy"
+    ],
+    "host.os.type": [
+      "windows"
+    ],
+    "agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.User": [
+      "DESKTOP-MM1REM9\\victim"
+    ],
+    "input.type": [
+      "winlog"
+    ],
+    "winlog.event_data.SourcePort": [
+      "50299"
+    ],
+    "winlog.event_data.ProcessGuid.keyword": [
+      "{c466df0a-5389-69ce-2b0a-000000000a00}"
+    ],
+    "host.architecture": [
+      "x86_64"
+    ],
+    "event.provider": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "event.code": [
+      "3"
+    ],
+    "winlog.event_data.Protocol.keyword": [
+      "tcp"
+    ],
+    "agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.DestinationIsIpv6.keyword": [
+      "false"
+    ],
+    "winlog.provider_name.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "winlog.event_data.UtcTime.keyword": [
+      "2026-04-02 11:42:42.991"
+    ],
+    "winlog.event_data.SourceIp.keyword": [
+      "10.0.20.10"
+    ],
+    "winlog.user.domain.keyword": [
+      "NT AUTHORITY"
+    ],
+    "winlog.api.keyword": [
+      "wineventlog"
+    ],
+    "winlog.process.thread.id": [
+      3092
+    ],
+    "input.type.keyword": [
+      "winlog"
+    ],
+    "data_stream.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "elastic_agent.version.keyword": [
+      "8.17.0"
+    ],
+    "winlog.event_data.Initiated.keyword": [
+      "true"
+    ],
+    "winlog.event_data.SourceHostname": [
+      "DESKTOP-MM1REM9.home.arpa"
+    ],
+    "host.ip": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "agent.type": [
+      "filebeat"
+    ],
+    "host.os.kernel.keyword": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "winlog.event_data.SourcePort.keyword": [
+      "50299"
+    ],
+    "data_stream.type.keyword": [
+      "logs"
+    ],
+    "winlog.api": [
+      "wineventlog"
+    ],
+    "winlog.user.identifier.keyword": [
+      "S-1-5-18"
+    ],
+    "winlog.user.type.keyword": [
+      "User"
+    ],
+    "event.provider.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "elastic_agent.snapshot": [
+      false
+    ],
+    "winlog.event_data.SourceIsIpv6.keyword": [
+      "false"
+    ],
+    "host.id": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "winlog.event_data.ProcessId": [
+      "8448"
+    ],
+    "winlog.event_data.SourcePortName.keyword": [
+      "-"
+    ],
+    "agent.type.keyword": [
+      "filebeat"
+    ],
+    "agent.ephemeral_id.keyword": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "agent.name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "elastic_agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.SourceHostname.keyword": [
+      "DESKTOP-MM1REM9.home.arpa"
+    ],
+    "winlog.event_data.SourceIsIpv6": [
+      "false"
+    ],
+    "winlog.event_data.DestinationHostname": [
+      "-"
+    ],
+    "winlog.user.name": [
+      "SYSTEM"
+    ],
+    "winlog.event_data.Image": [
+      "C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe"
+    ],
+    "event.action": [
+      "Network connection detected (rule: NetworkConnect)"
+    ],
+    "@timestamp": [
+      "2026-04-02T11:42:47.088Z"
+    ],
+    "winlog.channel": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.platform": [
+      "windows"
+    ],
+    "data_stream.dataset": [
+      "winlog.winlog"
+    ],
+    "winlog.user.name.keyword": [
+      "SYSTEM"
+    ],
+    "winlog.opcode": [
+      "Info"
+    ],
+    "agent.ephemeral_id": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "winlog.event_data.SourceIp": [
+      "10.0.20.10"
+    ],
+    "winlog.event_id.keyword": [
+      "3"
+    ],
+    "host.architecture.keyword": [
+      "x86_64"
+    ],
+    "elastic_agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.provider_guid": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.provider_name": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "host.os.build.keyword": [
+      "19045.6466"
+    ],
+    "event.code.keyword": [
+      "3"
+    ],
+    "winlog.computer_name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "ecs.version.keyword": [
+      "8.0.0"
+    ],
+    "host.ip.keyword": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "winlog.event_data.DestinationIp.keyword": [
+      "10.0.30.10"
+    ],
+    "winlog.record_id": [
+      12998
+    ],
+    "winlog.event_data.RuleName.keyword": [
+      "Proxy"
+    ],
+    "event.kind.keyword": [
+      "event"
+    ],
+    "host.os.name": [
+      "Windows 10 Pro"
+    ],
+    "log.level": [
+      "information"
+    ],
+    "event.action.keyword": [
+      "Network connection detected (rule: NetworkConnect)"
+    ],
+    "host.id.keyword": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "host.name": [
+      "desktop-mm1rem9"
+    ],
+    "event.kind": [
+      "event"
+    ],
+    "host.os.version.keyword": [
+      "10.0"
+    ],
+    "winlog.event_data.Protocol": [
+      "tcp"
+    ],
+    "winlog.version": [
+      5
+    ],
+    "winlog.event_data.Initiated": [
+      "true"
+    ],
+    "winlog.event_data.DestinationPortName": [
+      "-"
+    ],
+    "data_stream.type": [
+      "logs"
+    ],
+    "ecs.version": [
+      "8.0.0"
+    ],
+    "event.created": [
+      "2026-04-02T11:42:48.500Z"
+    ],
+    "host.hostname.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.DestinationIsIpv6": [
+      "false"
+    ],
+    "agent.version": [
+      "8.17.0"
+    ],
+    "host.os.family": [
+      "windows"
+    ],
+    "winlog.event_data.DestinationPortName.keyword": [
+      "-"
+    ],
+    "log.level.keyword": [
+      "information"
+    ],
+    "winlog.event_data.DestinationHostname.keyword": [
+      "-"
+    ],
+    "winlog.computer_name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "host.os.build": [
+      "19045.6466"
+    ],
+    "winlog.user.type": [
+      "User"
+    ],
+    "winlog.event_data.DestinationIp": [
+      "10.0.30.10"
+    ],
+    "host.os.kernel": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "winlog.event_data.DestinationPort.keyword": [
+      "8080"
+    ],
+    "host.os.name.keyword": [
+      "Windows 10 Pro"
+    ],
+    "winlog.provider_guid.keyword": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.user.identifier": [
+      "S-1-5-18"
+    ],
+    "winlog.task": [
+      "Network connection detected (rule: NetworkConnect)"
+    ],
+    "winlog.task.keyword": [
+      "Network connection detected (rule: NetworkConnect)"
+    ],
+    "winlog.user.domain": [
+      "NT AUTHORITY"
+    ],
+    "host.mac.keyword": [
+      "BC-24-11-9F-45-75"
+    ],
+    "data_stream.namespace": [
+      "default"
+    ],
+    "message": [
+      "Network connection detected:\nRuleName: Proxy\nUtcTime: 2026-04-02 11:42:42.991\nProcessGuid: {c466df0a-5389-69ce-2b0a-000000000a00}\nProcessId: 8448\nImage: C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe\nUser: DESKTOP-MM1REM9\\victim\nProtocol: tcp\nInitiated: true\nSourceIsIpv6: false\nSourceIp: 10.0.20.10\nSourceHostname: DESKTOP-MM1REM9.home.arpa\nSourcePort: 50299\nSourcePortName: -\nDestinationIsIpv6: false\nDestinationIp: 10.0.30.10\nDestinationHostname: -\nDestinationPort: 8080\nDestinationPortName: -"
+    ],
+    "winlog.event_id": [
+      "3"
+    ],
+    "winlog.channel.keyword": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.family.keyword": [
+      "windows"
+    ],
+    "host.os.type.keyword": [
+      "windows"
+    ],
+    "host.os.platform.keyword": [
+      "windows"
+    ],
+    "winlog.opcode.keyword": [
+      "Info"
+    ],
+    "event.dataset": [
+      "winlog.winlog"
+    ]
+  },
+  "ignored_field_values": {
+    "message.keyword": [
+      "Network connection detected:\nRuleName: Proxy\nUtcTime: 2026-04-02 11:42:42.991\nProcessGuid: {c466df0a-5389-69ce-2b0a-000000000a00}\nProcessId: 8448\nImage: C:\\Program Files\\WindowsApps\\Microsoft.PowerShell_7.6.0.0_x64__8wekyb3d8bbwe\\pwsh.exe\nUser: DESKTOP-MM1REM9\\victim\nProtocol: tcp\nInitiated: true\nSourceIsIpv6: false\nSourceIp: 10.0.20.10\nSourceHostname: DESKTOP-MM1REM9.home.arpa\nSourcePort: 50299\nSourcePortName: -\nDestinationIsIpv6: false\nDestinationIp: 10.0.30.10\nDestinationHostname: -\nDestinationPort: 8080\nDestinationPortName: -"
+    ]
+  }
+}

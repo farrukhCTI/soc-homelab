@@ -1,0 +1,10 @@
+*-enc* wildcard returns empty — field indexing issue.
+Use *hidden* as the working query for encoded PS detection.
+
+IR-003 START: 16:11
+IR-003 END: 16:46
+Encoded PS EID 1 timestamp: 16:11:25, 16:14:06
+Beacon EID 3 hits: 5+ (16:31 - 16:34)
+update.bat EID 11 timestamp: 16:46:03
+Working query for encoded PS: *hidden* (not *-enc*)
+NDR: 21 GET requests logged in Kali http.server

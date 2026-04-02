@@ -1,0 +1,270 @@
+{
+  "_index": "filebeat-7.14.0-2026.04.02",
+  "_id": "EVsATp0BuL2Ov6TVLnCQ",
+  "_version": 1,
+  "_source": {
+    "@timestamp": "2026-04-02T11:42:07.069Z",
+    "pkt_src": "wire/pcap",
+    "log": {
+      "offset": 228873,
+      "file": {
+        "path": "/var/log/suricata/suricata_vtnet242556/eve.json"
+      }
+    },
+    "agent": {
+      "name": "pfSense.home.arpa",
+      "type": "filebeat",
+      "version": "7.14.0",
+      "hostname": "pfSense.home.arpa",
+      "ephemeral_id": "90a984d9-a264-4fb2-aee4-dc3752dab915",
+      "id": "53035be0-00d3-47bd-8b49-f7b52fe04318"
+    },
+    "dest_port": 8080,
+    "tx_id": 0,
+    "event_type": "http",
+    "src_ip": "10.0.20.10",
+    "input": {
+      "type": "log"
+    },
+    "host": {
+      "name": "pfSense.home.arpa"
+    },
+    "dest_ip": "10.0.30.10",
+    "ecs": {
+      "version": "1.10.0"
+    },
+    "http": {
+      "http_content_type": "text/html",
+      "http_method": "GET",
+      "length": 1673,
+      "response_headers": [
+        {
+          "name": "Server",
+          "value": "SimpleHTTP/0.6 Python/3.13.12"
+        },
+        {
+          "name": "Date",
+          "value": "Thu, 02 Apr 2026 11:42:05 GMT"
+        },
+        {
+          "name": "Content-type",
+          "value": "text/html; charset=utf-8"
+        },
+        {
+          "value": "1673",
+          "name": "Content-Length"
+        }
+      ],
+      "hostname": "10.0.30.10",
+      "http_port": 8080,
+      "request_headers": [
+        {
+          "name": "Connection",
+          "value": "Keep-Alive"
+        }
+      ],
+      "url": "/",
+      "status": 200,
+      "protocol": "HTTP/1.1"
+    },
+    "timestamp": "2026-04-02T11:42:05.189365+0000",
+    "in_iface": "vtnet2",
+    "src_port": 50295,
+    "flow_id": 1643729695487748,
+    "proto": "TCP"
+  },
+  "fields": {
+    "agent.version.keyword": [
+      "7.14.0"
+    ],
+    "http.response_headers.value": [
+      "SimpleHTTP/0.6 Python/3.13.12",
+      "Thu, 02 Apr 2026 11:42:05 GMT",
+      "text/html; charset=utf-8",
+      "1673"
+    ],
+    "host.name.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "http.url": [
+      "/"
+    ],
+    "http.response_headers.name": [
+      "Server",
+      "Date",
+      "Content-type",
+      "Content-Length"
+    ],
+    "agent.hostname.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "http.request_headers.value.keyword": [
+      "Keep-Alive"
+    ],
+    "ecs.version.keyword": [
+      "1.10.0"
+    ],
+    "event_type": [
+      "http"
+    ],
+    "proto.keyword": [
+      "TCP"
+    ],
+    "flow_id": [
+      1643729695487748
+    ],
+    "http.protocol.keyword": [
+      "HTTP/1.1"
+    ],
+    "agent.name": [
+      "pfSense.home.arpa"
+    ],
+    "host.name": [
+      "pfSense.home.arpa"
+    ],
+    "http.http_port": [
+      8080
+    ],
+    "dest_port": [
+      8080
+    ],
+    "pkt_src": [
+      "wire/pcap"
+    ],
+    "agent.id.keyword": [
+      "53035be0-00d3-47bd-8b49-f7b52fe04318"
+    ],
+    "input.type": [
+      "log"
+    ],
+    "log.offset": [
+      228873
+    ],
+    "agent.hostname": [
+      "pfSense.home.arpa"
+    ],
+    "tx_id": [
+      0
+    ],
+    "http.request_headers.name.keyword": [
+      "Connection"
+    ],
+    "http.length": [
+      1673
+    ],
+    "http.hostname": [
+      "10.0.30.10"
+    ],
+    "http.request_headers.value": [
+      "Keep-Alive"
+    ],
+    "agent.id": [
+      "53035be0-00d3-47bd-8b49-f7b52fe04318"
+    ],
+    "dest_ip.keyword": [
+      "10.0.30.10"
+    ],
+    "ecs.version": [
+      "1.10.0"
+    ],
+    "pkt_src.keyword": [
+      "wire/pcap"
+    ],
+    "dest_ip": [
+      "10.0.30.10"
+    ],
+    "proto": [
+      "TCP"
+    ],
+    "agent.version": [
+      "7.14.0"
+    ],
+    "input.type.keyword": [
+      "log"
+    ],
+    "http.http_method": [
+      "GET"
+    ],
+    "http.response_headers.value.keyword": [
+      "SimpleHTTP/0.6 Python/3.13.12",
+      "Thu, 02 Apr 2026 11:42:05 GMT",
+      "text/html; charset=utf-8",
+      "1673"
+    ],
+    "event_type.keyword": [
+      "http"
+    ],
+    "http.response_headers.name.keyword": [
+      "Server",
+      "Date",
+      "Content-type",
+      "Content-Length"
+    ],
+    "http.hostname.keyword": [
+      "10.0.30.10"
+    ],
+    "http.http_content_type": [
+      "text/html"
+    ],
+    "http.http_method.keyword": [
+      "GET"
+    ],
+    "in_iface.keyword": [
+      "vtnet2"
+    ],
+    "src_ip": [
+      "10.0.20.10"
+    ],
+    "agent.type": [
+      "filebeat"
+    ],
+    "src_ip.keyword": [
+      "10.0.20.10"
+    ],
+    "log.file.path.keyword": [
+      "/var/log/suricata/suricata_vtnet242556/eve.json"
+    ],
+    "agent.type.keyword": [
+      "filebeat"
+    ],
+    "timestamp": [
+      "2026-04-02T11:42:05.189Z"
+    ],
+    "agent.ephemeral_id.keyword": [
+      "90a984d9-a264-4fb2-aee4-dc3752dab915"
+    ],
+    "agent.name.keyword": [
+      "pfSense.home.arpa"
+    ],
+    "http.request_headers.name": [
+      "Connection"
+    ],
+    "http.protocol": [
+      "HTTP/1.1"
+    ],
+    "in_iface": [
+      "vtnet2"
+    ],
+    "src_port": [
+      50295
+    ],
+    "@timestamp": [
+      "2026-04-02T11:42:07.069Z"
+    ],
+    "http.url.keyword": [
+      "/"
+    ],
+    "http.http_content_type.keyword": [
+      "text/html"
+    ],
+    "log.file.path": [
+      "/var/log/suricata/suricata_vtnet242556/eve.json"
+    ],
+    "agent.ephemeral_id": [
+      "90a984d9-a264-4fb2-aee4-dc3752dab915"
+    ],
+    "http.status": [
+      200
+    ]
+  }
+}

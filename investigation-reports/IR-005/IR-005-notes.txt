@@ -1,0 +1,9 @@
+IR-005 START: 17:28
+IR-005 END: 17:35
+Kill chain window: 2026-04-02 14:41 → 17:27
+Pivot 1: 111 EID 1 events across full window
+Pivot 2: mshta ParentProcessGuid {c466df0a-5a9b-69ce-600a-000000000a00} → child cmd.exe confirmed
+Pivot 3 EDR: 23 EID 3 events to 10.0.30.10
+Pivot 3 NDR: 68 Suricata records for 10.0.20.10
+
+Pivot 3 NDR HTTP flows (src_ip 10.0.20.10 AND http.http_method GET): 23 hits

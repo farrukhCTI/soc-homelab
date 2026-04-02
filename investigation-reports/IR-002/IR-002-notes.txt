@@ -1,0 +1,7 @@
+IR-002 START: 14:41
+IR-002 END: 14:53
+T=0 (Suricata SID 9000001 first hit): 2026-04-02 14:41:40
+Recon commands window: 14:45 - 14:52
+NDR hits: 26
+EDR EID 1 hits: 9
+Operator session ParentProcessGuid: {c466df0a-c199-69cc-5006-000000000a00}

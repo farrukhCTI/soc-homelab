@@ -1,0 +1,448 @@
+{
+  "_index": "logs-winlog.winlog-default",
+  "_id": "blshTp0BuL2Ov6TVdoq-",
+  "_version": 1,
+  "_ignored": [
+    "message.keyword"
+  ],
+  "_source": {
+    "@timestamp": "2026-04-02T12:18:17.567Z",
+    "elastic_agent": {
+      "snapshot": false,
+      "version": "8.17.0",
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    },
+    "log": {
+      "level": "information"
+    },
+    "host": {
+      "name": "desktop-mm1rem9",
+      "hostname": "DESKTOP-MM1REM9",
+      "architecture": "x86_64",
+      "os": {
+        "kernel": "10.0.19041.6456 (WinBuild.160101.0800)",
+        "build": "19045.6466",
+        "type": "windows",
+        "platform": "windows",
+        "version": "10.0",
+        "family": "windows",
+        "name": "Windows 10 Pro"
+      },
+      "id": "c466df0a-5a17-4b86-8ff6-4d8edbf647a8",
+      "ip": [
+        "fe80::5e29:4f96:fa0a:5d6",
+        "10.0.20.10"
+      ],
+      "mac": [
+        "BC-24-11-9F-45-75"
+      ]
+    },
+    "data_stream": {
+      "dataset": "winlog.winlog",
+      "namespace": "default",
+      "type": "logs"
+    },
+    "input": {
+      "type": "winlog"
+    },
+    "agent": {
+      "version": "8.17.0",
+      "ephemeral_id": "fb428c44-a56b-4417-83a3-d061abc3e7a5",
+      "id": "23b63155-d5a7-4c98-ba2f-6eb495833877",
+      "name": "DESKTOP-MM1REM9",
+      "type": "filebeat"
+    },
+    "ecs": {
+      "version": "8.0.0"
+    },
+    "message": "Registry value set:\nRuleName: T1089,Tamper-Defender\nEventType: SetValue\nUtcTime: 2026-04-02 12:18:17.561\nProcessGuid: {c466df0a-5e89-69ce-870a-000000000a00}\nProcessId: 1340\nImage: C:\\Windows\\system32\\reg.exe\nTargetObject: HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware\nDetails: DWORD (0x00000001)\nUser: DESKTOP-MM1REM9\\victim",
+    "winlog": {
+      "user": {
+        "type": "User",
+        "identifier": "S-1-5-18",
+        "domain": "NT AUTHORITY",
+        "name": "SYSTEM"
+      },
+      "version": 2,
+      "api": "wineventlog",
+      "event_id": "13",
+      "process": {
+        "pid": 2276,
+        "thread": {
+          "id": 3884
+        }
+      },
+      "provider_name": "Microsoft-Windows-Sysmon",
+      "event_data": {
+        "Image": "C:\\Windows\\system32\\reg.exe",
+        "RuleName": "T1089,Tamper-Defender",
+        "Details": "DWORD (0x00000001)",
+        "EventType": "SetValue",
+        "User": "DESKTOP-MM1REM9\\victim",
+        "TargetObject": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware",
+        "UtcTime": "2026-04-02 12:18:17.561",
+        "ProcessGuid": "{c466df0a-5e89-69ce-870a-000000000a00}",
+        "ProcessId": "1340"
+      },
+      "provider_guid": "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}",
+      "task": "Registry value set (rule: RegistryEvent)",
+      "opcode": "Info",
+      "record_id": 13057,
+      "channel": "Microsoft-Windows-Sysmon/Operational",
+      "computer_name": "DESKTOP-MM1REM9"
+    },
+    "event": {
+      "kind": "event",
+      "dataset": "winlog.winlog",
+      "provider": "Microsoft-Windows-Sysmon",
+      "action": "Registry value set (rule: RegistryEvent)",
+      "created": "2026-04-02T12:18:19.248Z",
+      "code": "13"
+    }
+  },
+  "fields": {
+    "agent.version.keyword": [
+      "8.17.0"
+    ],
+    "elastic_agent.version": [
+      "8.17.0"
+    ],
+    "host.name.keyword": [
+      "desktop-mm1rem9"
+    ],
+    "winlog.event_data.ProcessGuid": [
+      "{c466df0a-5e89-69ce-870a-000000000a00}"
+    ],
+    "event.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "host.hostname": [
+      "DESKTOP-MM1REM9"
+    ],
+    "host.mac": [
+      "BC-24-11-9F-45-75"
+    ],
+    "winlog.process.pid": [
+      2276
+    ],
+    "data_stream.namespace.keyword": [
+      "default"
+    ],
+    "winlog.event_data.ProcessId.keyword": [
+      "1340"
+    ],
+    "winlog.event_data.EventType.keyword": [
+      "SetValue"
+    ],
+    "host.os.version": [
+      "10.0"
+    ],
+    "agent.name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "winlog.event_data.User.keyword": [
+      "DESKTOP-MM1REM9\\victim"
+    ],
+    "winlog.event_data.UtcTime": [
+      "2026-04-02 12:18:17.561"
+    ],
+    "winlog.event_data.Image.keyword": [
+      "C:\\Windows\\system32\\reg.exe"
+    ],
+    "winlog.event_data.RuleName": [
+      "T1089,Tamper-Defender"
+    ],
+    "host.os.type": [
+      "windows"
+    ],
+    "agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.User": [
+      "DESKTOP-MM1REM9\\victim"
+    ],
+    "input.type": [
+      "winlog"
+    ],
+    "winlog.event_data.ProcessGuid.keyword": [
+      "{c466df0a-5e89-69ce-870a-000000000a00}"
+    ],
+    "host.architecture": [
+      "x86_64"
+    ],
+    "event.provider": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "event.code": [
+      "13"
+    ],
+    "agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.provider_name.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "winlog.event_data.UtcTime.keyword": [
+      "2026-04-02 12:18:17.561"
+    ],
+    "winlog.user.domain.keyword": [
+      "NT AUTHORITY"
+    ],
+    "winlog.api.keyword": [
+      "wineventlog"
+    ],
+    "winlog.process.thread.id": [
+      3884
+    ],
+    "input.type.keyword": [
+      "winlog"
+    ],
+    "data_stream.dataset.keyword": [
+      "winlog.winlog"
+    ],
+    "elastic_agent.version.keyword": [
+      "8.17.0"
+    ],
+    "host.ip": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "agent.type": [
+      "filebeat"
+    ],
+    "host.os.kernel.keyword": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "data_stream.type.keyword": [
+      "logs"
+    ],
+    "winlog.api": [
+      "wineventlog"
+    ],
+    "winlog.user.identifier.keyword": [
+      "S-1-5-18"
+    ],
+    "winlog.user.type.keyword": [
+      "User"
+    ],
+    "event.provider.keyword": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "elastic_agent.snapshot": [
+      false
+    ],
+    "winlog.event_data.Details": [
+      "DWORD (0x00000001)"
+    ],
+    "host.id": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "winlog.event_data.ProcessId": [
+      "1340"
+    ],
+    "winlog.event_data.TargetObject.keyword": [
+      "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware"
+    ],
+    "agent.type.keyword": [
+      "filebeat"
+    ],
+    "agent.ephemeral_id.keyword": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "agent.name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "elastic_agent.id": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.event_data.TargetObject": [
+      "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware"
+    ],
+    "winlog.user.name": [
+      "SYSTEM"
+    ],
+    "winlog.event_data.Image": [
+      "C:\\Windows\\system32\\reg.exe"
+    ],
+    "event.action": [
+      "Registry value set (rule: RegistryEvent)"
+    ],
+    "@timestamp": [
+      "2026-04-02T12:18:17.567Z"
+    ],
+    "winlog.channel": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.platform": [
+      "windows"
+    ],
+    "winlog.event_data.EventType": [
+      "SetValue"
+    ],
+    "data_stream.dataset": [
+      "winlog.winlog"
+    ],
+    "winlog.user.name.keyword": [
+      "SYSTEM"
+    ],
+    "winlog.opcode": [
+      "Info"
+    ],
+    "agent.ephemeral_id": [
+      "fb428c44-a56b-4417-83a3-d061abc3e7a5"
+    ],
+    "winlog.event_id.keyword": [
+      "13"
+    ],
+    "host.architecture.keyword": [
+      "x86_64"
+    ],
+    "elastic_agent.id.keyword": [
+      "23b63155-d5a7-4c98-ba2f-6eb495833877"
+    ],
+    "winlog.provider_guid": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.provider_name": [
+      "Microsoft-Windows-Sysmon"
+    ],
+    "host.os.build.keyword": [
+      "19045.6466"
+    ],
+    "event.code.keyword": [
+      "13"
+    ],
+    "winlog.computer_name": [
+      "DESKTOP-MM1REM9"
+    ],
+    "ecs.version.keyword": [
+      "8.0.0"
+    ],
+    "host.ip.keyword": [
+      "fe80::5e29:4f96:fa0a:5d6",
+      "10.0.20.10"
+    ],
+    "winlog.record_id": [
+      13057
+    ],
+    "winlog.event_data.RuleName.keyword": [
+      "T1089,Tamper-Defender"
+    ],
+    "event.kind.keyword": [
+      "event"
+    ],
+    "host.os.name": [
+      "Windows 10 Pro"
+    ],
+    "log.level": [
+      "information"
+    ],
+    "event.action.keyword": [
+      "Registry value set (rule: RegistryEvent)"
+    ],
+    "host.id.keyword": [
+      "c466df0a-5a17-4b86-8ff6-4d8edbf647a8"
+    ],
+    "host.name": [
+      "desktop-mm1rem9"
+    ],
+    "event.kind": [
+      "event"
+    ],
+    "host.os.version.keyword": [
+      "10.0"
+    ],
+    "winlog.version": [
+      2
+    ],
+    "data_stream.type": [
+      "logs"
+    ],
+    "ecs.version": [
+      "8.0.0"
+    ],
+    "event.created": [
+      "2026-04-02T12:18:19.248Z"
+    ],
+    "host.hostname.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "agent.version": [
+      "8.17.0"
+    ],
+    "host.os.family": [
+      "windows"
+    ],
+    "log.level.keyword": [
+      "information"
+    ],
+    "winlog.event_data.Details.keyword": [
+      "DWORD (0x00000001)"
+    ],
+    "winlog.computer_name.keyword": [
+      "DESKTOP-MM1REM9"
+    ],
+    "host.os.build": [
+      "19045.6466"
+    ],
+    "winlog.user.type": [
+      "User"
+    ],
+    "host.os.kernel": [
+      "10.0.19041.6456 (WinBuild.160101.0800)"
+    ],
+    "host.os.name.keyword": [
+      "Windows 10 Pro"
+    ],
+    "winlog.provider_guid.keyword": [
+      "{5770385f-c22a-43e0-bf4c-06f5698ffbd9}"
+    ],
+    "winlog.user.identifier": [
+      "S-1-5-18"
+    ],
+    "winlog.task": [
+      "Registry value set (rule: RegistryEvent)"
+    ],
+    "winlog.task.keyword": [
+      "Registry value set (rule: RegistryEvent)"
+    ],
+    "winlog.user.domain": [
+      "NT AUTHORITY"
+    ],
+    "host.mac.keyword": [
+      "BC-24-11-9F-45-75"
+    ],
+    "data_stream.namespace": [
+      "default"
+    ],
+    "message": [
+      "Registry value set:\nRuleName: T1089,Tamper-Defender\nEventType: SetValue\nUtcTime: 2026-04-02 12:18:17.561\nProcessGuid: {c466df0a-5e89-69ce-870a-000000000a00}\nProcessId: 1340\nImage: C:\\Windows\\system32\\reg.exe\nTargetObject: HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware\nDetails: DWORD (0x00000001)\nUser: DESKTOP-MM1REM9\\victim"
+    ],
+    "winlog.event_id": [
+      "13"
+    ],
+    "winlog.channel.keyword": [
+      "Microsoft-Windows-Sysmon/Operational"
+    ],
+    "host.os.family.keyword": [
+      "windows"
+    ],
+    "host.os.type.keyword": [
+      "windows"
+    ],
+    "host.os.platform.keyword": [
+      "windows"
+    ],
+    "winlog.opcode.keyword": [
+      "Info"
+    ],
+    "event.dataset": [
+      "winlog.winlog"
+    ]
+  },
+  "ignored_field_values": {
+    "message.keyword": [
+      "Registry value set:\nRuleName: T1089,Tamper-Defender\nEventType: SetValue\nUtcTime: 2026-04-02 12:18:17.561\nProcessGuid: {c466df0a-5e89-69ce-870a-000000000a00}\nProcessId: 1340\nImage: C:\\Windows\\system32\\reg.exe\nTargetObject: HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware\nDetails: DWORD (0x00000001)\nUser: DESKTOP-MM1REM9\\victim"
+    ]
+  }
+}
