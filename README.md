@@ -8,7 +8,7 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 ## How to Review This Project
 
-1. Start with **IR-005** — full kill chain reconstruction from a single NDR alert anchor
+1. Start with **IR-005**: full kill chain reconstruction from a single NDR alert anchor
 2. Refer to **IR-002 through IR-004** for individual attack stages
 3. Use screenshots and raw events in each report folder for validation
 
@@ -64,14 +64,14 @@ The investigation begins with a network scan alert and expands through endpoint 
 ### Detection Engineering
 - Identified the limitation of ET SCAN rules on internal RFC1918 traffic and engineered a custom Suricata rule (SID 9000001) that fires within 5 seconds of scan initiation
 - Created 96 Sysmon-based detection rules mapped to MITRE ATT&CK
-- Identified a KQL field tokenization issue where `*-enc*` wildcard silently fails on encoded PowerShell detection in this Elastic build — documented and remediated
+- Identified a KQL field tokenization issue where `*-enc*` wildcard silently fails on encoded PowerShell detection in this Elastic build, documented and remediated
 
 ### Pipeline Engineering
 - Identified and resolved a FreeBSD syslogd truncation issue (480-byte hard limit vs 800-1200 byte EVE JSON records) by replacing the UDP syslog pipeline with a standalone Filebeat binary on pfSense, eliminating silent data loss
 - Built and validated dual telemetry pipelines: Suricata EVE JSON via Filebeat (NDR) and Sysmon via Elastic Agent (EDR), operating independently with no shared data path
 
 ### Investigation Capability
-- Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout — all techniques LOLBin-based, no malware required
+- Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout, all techniques LOLBin-based, no malware required
 - Reconstructed the full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer correlation
 - Confirmed that endpoint and network telemetry independently corroborate the same C2 channel: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records, matching source IP, destination IP, and timestamp window, collected by two separate sensors with no shared data path
 
@@ -171,7 +171,7 @@ Kali (10.0.30.10)
 
 ### Custom Suricata Rule (SID 9000001)
 
-Standard ET SCAN rules do not fire on internal RFC1918 traffic — this is a documented Suricata limitation that affects any lab or production environment using private IP ranges. SID 9000001 is a custom rule engineered to close this gap:
+Standard ET SCAN rules do not fire on internal RFC1918 traffic. This is a documented Suricata limitation that affects any lab or production environment using private IP ranges. SID 9000001 is a custom rule engineered to close this gap:
 
 ```
 alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 any (
