@@ -1,6 +1,6 @@
 # SOC Homelab – Detection & Incident Response
 
-**Focus:** SOC Analyst | Detection Engineering | Incident Response  
+**Focus:** SOC Analyst | Detection Engineering | Incident Response
 
 Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoint telemetry)** and **Suricata (network IDS)**, with investigation performed in **Elastic SIEM (Elasticsearch + Kibana)**.
 
@@ -8,52 +8,67 @@ Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoin
 
 ## What this demonstrates
 
-- Endpoint detection using Sysmon + KQL  
-- Network detection using Suricata (custom rule engineering)  
-- Correlation of network + endpoint telemetry  
-- Incident response investigations mapped to MITRE ATT&CK  
-- Detection gap analysis and remediation design  
+- Endpoint detection using Sysmon + KQL
+- Network detection using Suricata (custom rule engineering)
+- Cross-layer correlation of NDR and EDR telemetry
+- Incident response investigations mapped to MITRE ATT&CK
+- Kill chain reconstruction across a connected multi-phase attack narrative
+- Detection gap analysis and remediation design
 
 ---
 
-## Example Detection (IR-001)
+## Investigation Reports
 
-![Scheduled Task Detection](investigation-reports/screenshots/IR-001/kibana-event1-schtasks.png)
+All five investigations cover a connected kill chain simulating LOLBin-based pre-ransomware operator behavior on a defended Windows 10 endpoint (Defender ON, UAC ON throughout).
 
-**Scenario:**  
-- Tool transfer via `certutil.exe`  
-- Persistence via scheduled task (`schtasks.exe`)  
-- Encoded PowerShell execution  
+| Report | Title | MITRE TTPs | Status |
+|---|---|---|---|
+| IR-001 | Tool Transfer and Persistence | T1105, T1053.005, T1218.003 | Complete |
+| IR-002 | Reconnaissance and Host Discovery | T1046, T1082, T1033, T1016 | Complete |
+| IR-003 | Encoded PowerShell Execution and C2 Beaconing | T1059.001, T1027, T1071.001, T1105 | Complete |
+| IR-004 | Defense Evasion and Persistence | T1218.005, T1547.001, T1562.001, T1036 | Complete |
+| IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Complete |
 
-**Evidence captured:**
-- Sysmon Event ID 3 → outbound network connection  
-- Sysmon Event ID 1 → scheduled task creation  
-- Sysmon Event ID 11 → task file written  
+IR-005 is the portfolio centrepiece — a pure analyst exercise reconstructing the full kill chain from a single NDR alert anchor using ProcessGuid chaining and cross-layer EDR/NDR correlation.
 
-**Full report:** `investigation-reports/IR-001.md`
+---
+
+## Kill Chain Narrative (IR-002 → IR-005)
+```
+IR-002              IR-003                  IR-004                    IR-005
+Reconnaissance  →   Encoded Execution   →   Persistence           →   Correlated Hunt
+& Discovery         & C2 Beaconing          & Defense Evasion         Full Kill Chain
+
+T1046, T1082        T1059.001, T1027        T1218.005, T1547.001      Cross-layer
+T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
+```
+
+**Kill chain window:** 2026-04-02 14:41 → 17:18 (2 hours 37 minutes)
+**T=0:** Suricata SID 9000001 fires on Nmap SYN scan (14:41:40)
+**Endpoint:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2
 
 ---
 
 ## Key Achievements
 
-- Built segmented lab where attack traffic must traverse a monitored interface (Suricata on OPT1)
-- Identified limitation of ET SCAN rules in internal traffic scenarios and engineered a custom detection rule (SID 9000001)
+- Built a segmented lab where attack traffic must traverse a monitored pfSense interface (Suricata on OPT1)
+- Identified the limitation of ET SCAN rules on internal traffic and engineered a custom detection rule (SID 9000001) that fires within 5 seconds of scan initiation
+- Identified and resolved a FreeBSD syslogd truncation issue (480-byte limit vs 800-1200 byte EVE JSON records) by replacing UDP syslog pipeline with standalone Filebeat binary on pfSense
 - Created 96 Sysmon-based detection rules mapped to MITRE ATT&CK
-- Verified real-time correlation between:
-  - Network alerts (Suricata EVE JSON)
-  - Endpoint telemetry (Sysmon via Elastic Agent)
-- Performed full incident investigation with timeline reconstruction and detection gap analysis
+- Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout — all techniques LOLBin-based, no malware required
+- Reconstructed full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer EDR/NDR correlation
+- Confirmed cross-layer smoking gun: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records independently corroborating the same C2 channel
 
 ---
 
 ## Architecture (Overview)
 
-- Node 1: SOC Core (Elastic SIEM + Sysmon)
+- Node 1: SOC Core (Elastic SIEM + Fleet Server)
 - Node 2: Proxmox lab (pfSense, Kali attacker, Windows victim)
-- pfSense: Routing + Suricata IDS
+- pfSense: Routing + Suricata IDS + Filebeat NDR pipeline
 - Network segmentation:
-  - 10.0.30.0/24 → Attack network
-  - 10.0.20.0/24 → Victim network
+  - 10.0.30.0/24 → Attack network (Kali)
+  - 10.0.20.0/24 → Victim network (Windows 10)
 - Monitored traffic must traverse pfSense OPT1 (Suricata interface)
 
 ---
@@ -67,12 +82,11 @@ Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoin
 ---
 
 ## Architecture (Detailed)
-
 ```
 192.168.100.0/24 — HOME LAN
 │
 ├── Node 1: SOC Core (192.168.100.143)
-│   └── Elasticsearch + Kibana + Fleet + Sysmon
+│   └── Elasticsearch + Kibana + Fleet Server + Elastic Agent
 │
 └── Node 2: Proxmox (192.168.100.2)
     │
@@ -86,12 +100,12 @@ Hands-on SOC lab simulating real-world attacker behavior using **Sysmon (endpoin
     ├── VM 101: Kali Linux
     │   └── 10.0.30.10 (Attack Network - vmbr2)
     │
-    └── VM 102: Windows 10 Victim
+    └── VM 102: Windows 10 Victim (DESKTOP-MM1REM9)
         └── 10.0.20.10 (Victim Network - vmbr1)
+            └── Sysmon v15.20 + Elastic Agent 8.17.0
 ```
 
 **Monitored Traffic Path (Suricata visible):**
-
 ```
 Kali (10.0.30.10)
    → pfSense OPT1 (Suricata)
@@ -100,7 +114,6 @@ Kali (10.0.30.10)
 ```
 
 **Unmonitored Path (Suricata blind spot):**
-
 ```
 Kali → Node 1 (192.168.100.143)
 ```
@@ -109,24 +122,22 @@ Kali → Node 1 (192.168.100.143)
 
 ## Detection Pipelines
 
-### Endpoint Pipeline
-
+### Endpoint Pipeline (EDR)
 ```
 Victim (10.0.20.10)
-  → Sysmon
-  → Elastic Agent
-  → Fleet Server (Node 1)
-  → Elasticsearch
-  → Kibana
+  → Sysmon v15.20
+  → Elastic Agent 8.17.0
+  → Fleet Server (Node 1 :8221)
+  → Elasticsearch :9200
+  → Kibana (logs-* data view)
 ```
 
-### Network Pipeline
-
+### Network Pipeline (NDR)
 ```
 Kali (10.0.30.10)
   → pfSense OPT1 (Suricata)
-  → EVE JSON (file: /var/log/suricata/suricata_vtnet242556/eve.json)
-  → Filebeat 7.14.0 (standalone binary on pfSense)
+  → EVE JSON → /var/log/suricata/suricata_vtnet242556/eve.json
+  → Filebeat 7.14.0 (standalone binary on pfSense FreeBSD)
   → Elasticsearch :9200 (HTTP)
   → Kibana (filebeat-* data view)
 ```
@@ -137,6 +148,7 @@ Kali (10.0.30.10)
 
 ### Custom Suricata Rule (SID 9000001)
 
+Standard ET SCAN rules do not fire on internal RFC1918 traffic. SID 9000001 is a custom rule engineered specifically for this environment:
 ```
 alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 any (
   msg:"LOCAL SCAN Kali SYN Sweep to Victim";
@@ -146,71 +158,83 @@ alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 any (
 )
 ```
 
----
+Fires within 5 seconds of Nmap SYN scan initiation. Validated in IR-002.
 
 ### Sysmon Detection Rules
 
 - 96 custom KQL-based detection rules
 - Coverage across MITRE ATT&CK tactics
-
-Export:
-detection-rules/sysmon-custom-rules.ndjson
+- Export: `detection-rules/sysmon-custom-rules.ndjson`
 
 ---
 
-## Investigation Reports
-
-- IR-001: Tool Transfer & Persistence — COMPLETE  
-- IR-002: Credential Access (LSASS) — IN PROGRESS  
-- IR-003: Persistence — IN PROGRESS  
-- IR-004: LOLBins — IN PROGRESS  
-- IR-005: Full Kill Chain — PLANNED  
+## Repository Structure
+```
+soc-homelab/
+├── README.md
+├── diagrams/
+│   └── homelab-diagram.png
+├── docker/
+│   └── elastic/
+│       └── docker-compose.yml
+├── detection-rules/
+│   ├── sysmon-custom-rules.ndjson
+│   └── sysmon-custom-rules.ps1
+├── config/
+│   └── sysmon-config.xml
+├── scripts/
+│   └── Create-SysmonDetectionRules.ps1
+└── investigation-reports/
+    ├── IR-001/
+    │   ├── IR-001-tool-transfer-and-persistence.md
+    │   └── screenshots/
+    ├── IR-002/
+    │   ├── IR-002-reconnaissance-and-host-discovery.md
+    │   ├── screenshots/
+    │   └── raw-events/
+    ├── IR-003/
+    │   ├── IR-003-encoded-execution-and-c2-beaconing.md
+    │   ├── screenshots/
+    │   └── raw-events/
+    ├── IR-004/
+    │   ├── IR-004-defense-evasion-and-persistence.md
+    │   ├── screenshots/
+    │   └── raw-events/
+    └── IR-005/
+        ├── IR-005-correlated-kill-chain-hunt.md
+        ├── screenshots/
+        └── raw-events/
+```
 
 ---
 
 ## Stack
 
-- Elasticsearch / Kibana  
-- Elastic Agent  
-- Sysmon  
-- Suricata  
-- pfSense  
-- Proxmox  
-- Kali Linux  
+| Component | Version | Role |
+|---|---|---|
+| Elasticsearch | 8.17.0 | Data storage and search |
+| Kibana | 8.17.0 | SIEM interface and investigation |
+| Elastic Agent | 8.17.0 | EDR collection on victim |
+| Sysmon | v15.20 | Endpoint telemetry |
+| Suricata | CE (pfSense) | Network IDS |
+| Filebeat | 7.14.0 | NDR pipeline (pfSense FreeBSD) |
+| pfSense | CE 2.8.1 | Routing and IDS |
+| Proxmox | VE | Hypervisor (Node 2) |
+| Kali Linux | — | Attack platform |
 
 ---
 
 ## Hardware
 
 | Node | Device | CPU | RAM | Role |
-|------|--------|-----|-----|------|
+|---|---|---|---|---|
 | Node 1 | Dell Inspiron 3593 | i5-1035G1 | 16GB | SOC Core |
 | Node 2 | Dell E7250 | i5-5300U | 8GB | Proxmox Lab |
 
 ---
 
-## Repository Structure
-
-```
-soc-homelab/
-├── README.md
-├── docker/
-├── detection-rules/
-├── config/
-├── scripts/
-└── investigation-reports/
-    ├── IR-001.md
-    ├── IR-002.md
-    ├── IR-003.md
-    ├── IR-004.md
-    ├── IR-005.md
-    └── screenshots/
-```
-
----
-
 ## Author
 
-Farrukh Ejaz  
-GitHub: https://github.com/farrukhCTI  
-LinkedIn: https://linkedin.com/in/farrukhejazminhas  
+Farrukh Ejaz
+GitHub: https://github.com/farrukhCTI
+LinkedIn: https://linkedin.com/in/farrukhejazminhas
