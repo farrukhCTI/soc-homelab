@@ -1,4 +1,4 @@
-# SOC Homelab – Detection & Incident Response
+# SOC Homelab: Detection & Incident Response
 
 **Focus:** SOC Analyst | Detection Engineering | Incident Response
 
@@ -29,23 +29,23 @@ All five investigations cover a connected kill chain simulating LOLBin-based pre
 | IR-004 | Defense Evasion and Persistence | T1218.005, T1547.001, T1562.001, T1036 | Complete |
 | IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Complete |
 
-IR-005 is the portfolio centrepiece — a pure analyst exercise reconstructing the full kill chain from a single NDR alert anchor using ProcessGuid chaining and cross-layer EDR/NDR correlation.
+IR-005 is the portfolio centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert anchor using ProcessGuid chaining and cross-layer EDR/NDR correlation.
 
 ---
 
-## Kill Chain Narrative (IR-002 → IR-005)
+## Kill Chain Narrative (IR-002 to IR-005)
 ```
 IR-002              IR-003                  IR-004                    IR-005
-Reconnaissance  →   Encoded Execution   →   Persistence           →   Correlated Hunt
+Reconnaissance  ->  Encoded Execution   ->  Persistence           ->  Correlated Hunt
 & Discovery         & C2 Beaconing          & Defense Evasion         Full Kill Chain
 
 T1046, T1082        T1059.001, T1027        T1218.005, T1547.001      Cross-layer
 T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 ```
 
-**Kill chain window:** 2026-04-02 14:41 → 17:18 (2 hours 37 minutes)
-**T=0:** Suricata SID 9000001 fires on Nmap SYN scan (14:41:40)
-**Endpoint:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2
+**Kill chain window:** 2026-04-02 14:41 to 17:18 (2 hours 37 minutes)
+**T=0:** Suricata SID 9000001 fires on Nmap SYN scan at 14:41:40
+**Endpoint:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2
 
 ---
 
@@ -55,9 +55,9 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 - Identified the limitation of ET SCAN rules on internal traffic and engineered a custom detection rule (SID 9000001) that fires within 5 seconds of scan initiation
 - Identified and resolved a FreeBSD syslogd truncation issue (480-byte limit vs 800-1200 byte EVE JSON records) by replacing UDP syslog pipeline with standalone Filebeat binary on pfSense
 - Created 96 Sysmon-based detection rules mapped to MITRE ATT&CK
-- Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout — all techniques LOLBin-based, no malware required
+- Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout, all techniques LOLBin-based, no malware required
 - Reconstructed full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer EDR/NDR correlation
-- Confirmed cross-layer smoking gun: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records independently corroborating the same C2 channel
+- Confirmed cross-layer finding: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records independently corroborating the same C2 channel
 
 ---
 
@@ -67,8 +67,8 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 - Node 2: Proxmox lab (pfSense, Kali attacker, Windows victim)
 - pfSense: Routing + Suricata IDS + Filebeat NDR pipeline
 - Network segmentation:
-  - 10.0.30.0/24 → Attack network (Kali)
-  - 10.0.20.0/24 → Victim network (Windows 10)
+  - 10.0.30.0/24: Attack network (Kali)
+  - 10.0.20.0/24: Victim network (Windows 10)
 - Monitored traffic must traverse pfSense OPT1 (Suricata interface)
 
 ---
@@ -91,11 +91,11 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 └── Node 2: Proxmox (192.168.100.2)
     │
     ├── VM 100: pfSense (Router + IDS + NDR Sensor)
-    │   ├── WAN  → 192.168.100.144 (vmbr0)
-    │   ├── LAN  → 10.0.20.1/24   (vmbr1 - Victim Network)
-    │   └── OPT1 → 10.0.30.1/24   (vmbr2 - Attack Network)
+    │   ├── WAN  -> 192.168.100.144 (vmbr0)
+    │   ├── LAN  -> 10.0.20.1/24   (vmbr1 - Victim Network)
+    │   └── OPT1 -> 10.0.30.1/24   (vmbr2 - Attack Network)
     │        └── Suricata (monitoring OPT1 / vtnet2)
-    │        └── Filebeat 7.14.0 (EVE JSON → ES :9200)
+    │        └── Filebeat 7.14.0 (EVE JSON -> ES :9200)
     │
     ├── VM 101: Kali Linux
     │   └── 10.0.30.10 (Attack Network - vmbr2)
@@ -108,14 +108,14 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 **Monitored Traffic Path (Suricata visible):**
 ```
 Kali (10.0.30.10)
-   → pfSense OPT1 (Suricata)
-   → pfSense LAN
-   → Victim (10.0.20.10)
+   -> pfSense OPT1 (Suricata)
+   -> pfSense LAN
+   -> Victim (10.0.20.10)
 ```
 
 **Unmonitored Path (Suricata blind spot):**
 ```
-Kali → Node 1 (192.168.100.143)
+Kali -> Node 1 (192.168.100.143)
 ```
 
 ---
@@ -125,21 +125,21 @@ Kali → Node 1 (192.168.100.143)
 ### Endpoint Pipeline (EDR)
 ```
 Victim (10.0.20.10)
-  → Sysmon v15.20
-  → Elastic Agent 8.17.0
-  → Fleet Server (Node 1 :8221)
-  → Elasticsearch :9200
-  → Kibana (logs-* data view)
+  -> Sysmon v15.20
+  -> Elastic Agent 8.17.0
+  -> Fleet Server (Node 1 :8221)
+  -> Elasticsearch :9200
+  -> Kibana (logs-* data view)
 ```
 
 ### Network Pipeline (NDR)
 ```
 Kali (10.0.30.10)
-  → pfSense OPT1 (Suricata)
-  → EVE JSON → /var/log/suricata/suricata_vtnet242556/eve.json
-  → Filebeat 7.14.0 (standalone binary on pfSense FreeBSD)
-  → Elasticsearch :9200 (HTTP)
-  → Kibana (filebeat-* data view)
+  -> pfSense OPT1 (Suricata)
+  -> EVE JSON -> /var/log/suricata/suricata_vtnet242556/eve.json
+  -> Filebeat 7.14.0 (standalone binary on pfSense FreeBSD)
+  -> Elasticsearch :9200 (HTTP)
+  -> Kibana (filebeat-* data view)
 ```
 
 ---
@@ -148,7 +148,7 @@ Kali (10.0.30.10)
 
 ### Custom Suricata Rule (SID 9000001)
 
-Standard ET SCAN rules do not fire on internal RFC1918 traffic. SID 9000001 is a custom rule engineered specifically for this environment:
+Standard ET SCAN rules do not fire on internal RFC1918 traffic. SID 9000001 is a custom rule engineered for this environment:
 ```
 alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 any (
   msg:"LOCAL SCAN Kali SYN Sweep to Victim";
@@ -220,7 +220,7 @@ soc-homelab/
 | Filebeat | 7.14.0 | NDR pipeline (pfSense FreeBSD) |
 | pfSense | CE 2.8.1 | Routing and IDS |
 | Proxmox | VE | Hypervisor (Node 2) |
-| Kali Linux | — | Attack platform |
+| Kali Linux | Latest | Attack platform |
 
 ---
 
