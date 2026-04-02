@@ -5,7 +5,7 @@
 **Date:** 2026-04-02
 **Status:** Closed
 **Severity:** High
-**Host:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2
+**Host:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2
 **MITRE ATT&CK:** T1059.001, T1071.001, T1027, T1105
 **Connected Narrative:** This report continues from IR-002 (Reconnaissance and Host Discovery). Following host enumeration, the threat actor transitioned to execution via encoded PowerShell and established jittered HTTP C2 communications to the attack host (10.0.30.10). A staged file (update.bat) was downloaded to disk. This activity is followed by defense evasion and persistence documented in IR-004.
 
@@ -35,12 +35,12 @@ A file (update.bat) was staged to `C:\Users\Public\` via WebClient DownloadFile,
 EDR telemetry via Sysmon EID 1 (process creation), EID 3 (network connection), EID 11 (file creation) shipped via Elastic Agent 8.17.0 to logs-winlog.winlog-default index. NDR telemetry via Suricata EVE JSON shipped via Filebeat to filebeat-* index. Analysis performed in Kibana Discover.
 
 **Analysis:**
-Encoded PowerShell identified via EID 1 CommandLine containing `-w hidden -nop`. Note: wildcard query `*-enc*` returns empty due to field indexing behavior on this build — confirmed working query is `*hidden*` targeting `winlog.event_data.CommandLine`. Beacon activity correlated across EDR (EID 3) and NDR (Suricata HTTP flows) using matching source/destination IPs and overlapping timestamps. File staging confirmed via EID 11.
+Encoded PowerShell identified via EID 1 CommandLine containing `-w hidden -nop`. Note: wildcard query `*-enc*` returns empty due to field indexing behavior on this build. Confirmed working query is `*hidden*` targeting `winlog.event_data.CommandLine`. Beacon activity correlated across EDR (EID 3) and NDR (Suricata HTTP flows) using matching source/destination IPs and overlapping timestamps. File staging confirmed via EID 11.
 
 **Enrichment:**
-- `-w hidden -nop -enc` → T1027 (Obfuscated Files or Information), T1059.001 (PowerShell)
-- Jittered HTTP beaconing with browser User-Agent → T1071.001 (Web Protocols)
-- WebClient DownloadFile to `C:\Users\Public\` → T1105 (Ingress Tool Transfer)
+- `-w hidden -nop -enc` -> T1027 (Obfuscated Files or Information), T1059.001 (PowerShell)
+- Jittered HTTP beaconing with browser User-Agent -> T1071.001 (Web Protocols)
+- WebClient DownloadFile to `C:\Users\Public\` -> T1105 (Ingress Tool Transfer)
 
 **Conclusion:**
 Full execution and C2 chain confirmed across both EDR and NDR pipelines. Cross-layer correlation provides high-confidence attribution of network activity to the specific process on the victim host.
@@ -50,10 +50,10 @@ Full execution and C2 chain confirmed across both EDR and NDR pipelines. Cross-l
 ### Baseline and Tripwires
 
 **Network baseline:**
-Suricata on pfSense OPT1 recorded 23 HTTP GET requests from 10.0.20.10 to 10.0.30.10:8080. No alert fired — Suricata has no rule matching internal HTTP traffic to port 8080. Detection at NDR layer was investigator-initiated, not alert-driven. This is a documented gap.
+Suricata on pfSense OPT1 recorded 23 HTTP GET requests from 10.0.20.10 to 10.0.30.10:8080. No alert fired. Suricata has no rule matching internal HTTP traffic to port 8080. Detection at NDR layer was investigator-initiated, not alert-driven. This is a documented gap.
 
 **Endpoint baseline:**
-Sysmon captured EID 1 on PowerShell execution, EID 3 on each beacon connection, and EID 11 on file staging. Windows Defender did not block any of these activities — `-w hidden -nop -enc` flags are legitimate PowerShell arguments. Outbound HTTP to an internal IP is not blocked by default Defender policy.
+Sysmon captured EID 1 on PowerShell execution, EID 3 on each beacon connection, and EID 11 on file staging. Windows Defender did not block any of these activities. The `-w hidden -nop -enc` flags are legitimate PowerShell arguments. Outbound HTTP to an internal IP is not blocked by default Defender policy.
 
 **Investigation type:**
 Proactive investigation continuing from IR-002 timeline. No standalone alert generated for this phase.
@@ -66,7 +66,7 @@ Proactive investigation continuing from IR-002 timeline. No standalone alert gen
 Assumed via existing elevated session continuing from IR-002.
 
 **First observed activity:**
-2026-04-02T16:11:25 — Encoded PowerShell execution (EID 1, CommandLine: `powershell.exe -w hidden -nop -enc dwBoAG8A...`).
+2026-04-02T16:11:25, Encoded PowerShell execution (EID 1, CommandLine: `powershell.exe -w hidden -nop -enc dwBoAG8A...`).
 
 **Execution:**
 Base64-encoded command decoded to: `whoami; hostname; Get-Date`. Execution via `-w hidden` suppresses visible window. `-nop` bypasses profile loading. `-enc` accepts base64 payload, bypassing command-line string matching on plain text.
@@ -103,9 +103,9 @@ None observed beyond initial encoded command output (whoami/hostname/date).
 ### Notable Observations
 
 - The encoded PowerShell command was executed twice (16:11:25 and 16:14:06), likely due to operator retry. Both executions are captured in telemetry and share identical base64 payload, confirming same operator session.
-- KQL wildcard `*-enc*` returns empty results against `winlog.event_data.CommandLine` on this Elastic build due to field tokenization behavior. The working detection query uses `*hidden*` instead. This is a detection engineering finding — rules relying on `-enc` flag matching may silently fail on certain Elastic configurations.
+- KQL wildcard `*-enc*` returns empty results against `winlog.event_data.CommandLine` on this Elastic build due to field tokenization behavior. The working detection query uses `*hidden*` instead. This is a detection engineering finding, as rules relying on `-enc` flag matching may silently fail on certain Elastic configurations.
 - Beacon jitter of 25-45 seconds with Mozilla User-Agent is designed to blend with normal browser traffic. Without a network baseline establishing that no browser runs on this host, this traffic would be difficult to flag on NDR alone.
-- EID 3 events from Sysmon and HTTP flow records from Suricata EVE show matching source IP (10.0.20.10), destination IP (10.0.30.10), and overlapping timestamps. This cross-layer confirmation — same actor seen independently by EDR and NDR — is the foundation of the IR-005 correlated hunt.
+- EID 3 events from Sysmon and HTTP flow records from Suricata EVE show matching source IP (10.0.20.10), destination IP (10.0.30.10), and overlapping timestamps. This cross-layer confirmation, where the same actor is seen independently by EDR and NDR, is the foundation of the IR-005 correlated hunt.
 - `C:\Users\Public\` is a common staging directory in real intrusions due to its world-writable permissions and low monitoring attention.
 
 ---
@@ -162,7 +162,7 @@ agent.name: "DESKTOP-MM1REM9" AND event.code: "11" AND winlog.event_data.TargetF
 
 ### Mitigation
 
-- Enable PowerShell Script Block Logging (Event ID 4104) — captures decoded content regardless of `-enc` flag
+- Enable PowerShell Script Block Logging (Event ID 4104), which captures decoded content regardless of `-enc` flag
 - Enable PowerShell Transcription logging
 - Alert on `-w hidden` combined with `-enc` in process CommandLine
 - Implement network baseline to flag unexpected outbound HTTP from endpoints

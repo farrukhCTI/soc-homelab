@@ -5,7 +5,7 @@
 **Date:** 2026-04-02
 **Status:** Closed
 **Severity:** Medium
-**Host:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2
+**Host:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2
 **MITRE ATT&CK:** T1046, T1082, T1033, T1016
 **Connected Narrative:** This report begins the IR-002 through IR-005 kill chain. It establishes T=0 for the full attack timeline and documents the initial external and internal reconnaissance phase that precedes execution and persistence activity documented in IR-003 and IR-004.
 
@@ -15,7 +15,7 @@
 
 On 2026-04-02, network scanning activity originating from an internal attack host (10.0.30.10) was detected against a Windows 10 endpoint (DESKTOP-MM1REM9, 10.0.20.10). The scan triggered a custom Suricata detection rule (SID 9000001) within seconds of initiation, providing the earliest timestamp anchor for this investigation.
 
-Following the external scan, a burst of native Windows reconnaissance binaries was executed on the victim host across a seven-minute window. Commands included `whoami`, `net user`, `systeminfo`, `ipconfig`, `route print`, `arp`, `tasklist`, and `netstat` — all executed from a single elevated PowerShell session, consistent with deliberate manual enumeration after initial access.
+Following the external scan, a burst of native Windows reconnaissance binaries was executed on the victim host across a seven-minute window. Commands included `whoami`, `net user`, `systeminfo`, `ipconfig`, `route print`, `arp`, `tasklist`, and `netstat`, all executed from a single elevated PowerShell session, consistent with deliberate manual enumeration after initial access.
 
 No lateral movement or data exfiltration was observed. This activity represents the reconnaissance phase of a broader attack sequence that continues in IR-003.
 
@@ -38,11 +38,11 @@ NDR telemetry collected via Suricata on pfSense OPT1 interface, shipped to Elast
 NDR alert timestamp used as T=0. EDR events correlated forward from T=0 using `agent.name: "DESKTOP-MM1REM9"`. Recon binary burst identified within a seven-minute window starting at 14:45. All nine recon commands traced to a single parent PowerShell session via shared ParentProcessGuid.
 
 **Enrichment:**
-- `whoami`, `net user`, `net localgroup` → T1033 (System Owner/User Discovery)
-- `systeminfo` → T1082 (System Information Discovery)
-- `ipconfig`, `route print`, `arp` → T1016 (System Network Configuration Discovery)
-- `tasklist`, `netstat` → T1057, T1049
-- Nmap SYN/connect scan → T1046 (Network Service Discovery)
+- `whoami`, `net user`, `net localgroup` -> T1033 (System Owner/User Discovery)
+- `systeminfo` -> T1082 (System Information Discovery)
+- `ipconfig`, `route print`, `arp` -> T1016 (System Network Configuration Discovery)
+- `tasklist`, `netstat` -> T1057, T1049
+- Nmap SYN/connect scan -> T1046 (Network Service Discovery)
 
 **Conclusion:**
 Two-stage reconnaissance confirmed. External network scan detected at NDR layer. Internal host enumeration detected at EDR layer. Both stages traceable to the same operator session.
@@ -52,10 +52,10 @@ Two-stage reconnaissance confirmed. External network scan detected at NDR layer.
 ### Baseline and Tripwires
 
 **Network baseline:**
-Suricata deployed on pfSense OPT1 monitors traffic between the attack network (10.0.30.0/24) and victim network (10.0.20.0/24). Standard ET SCAN rules do not fire on internal traffic — SID 9000001 is a custom rule written specifically for this environment. It fired within 5 seconds of scan initiation.
+Suricata deployed on pfSense OPT1 monitors traffic between the attack network (10.0.30.0/24) and victim network (10.0.20.0/24). Standard ET SCAN rules do not fire on internal traffic. SID 9000001 is a custom rule written specifically for this environment. It fired within 5 seconds of scan initiation.
 
 **Endpoint baseline:**
-Sysmon with SwiftOnSecurity configuration active on victim. All nine recon binaries are native Windows executables — none are blocked by Defender. Detection relies entirely on process creation telemetry and behavioral density analysis.
+Sysmon with SwiftOnSecurity configuration active on victim. All nine recon binaries are native Windows executables, none are blocked by Defender. Detection relies entirely on process creation telemetry and behavioral density analysis.
 
 **Investigation type:**
 Proactive detection via NDR alert, correlated with EDR telemetry.
@@ -104,7 +104,7 @@ None observed.
 ### Notable Observations
 
 - All nine recon binaries share an identical ParentProcessGuid (`{c466df0a-c199-69cc-5006-000000000a00}`), confirming execution from a single operator-controlled PowerShell session. This GUID serves as the operator session anchor for IR-005 cross-IR correlation.
-- Command spacing of 30-60 seconds between binaries is consistent with deliberate manual enumeration. Scripted batch execution would produce sub-second spacing. This behavioral pattern has implications for detection tuning — density thresholds must account for human-paced execution.
+- Command spacing of 30-60 seconds between binaries is consistent with deliberate manual enumeration. Scripted batch execution would produce sub-second spacing. This behavioral pattern has implications for detection tuning, as density thresholds must account for human-paced execution.
 - The external scan (NDR) and internal recon (EDR) are separated by approximately four minutes, consistent with an operator reviewing scan results before proceeding to host enumeration.
 - Nmap connect scan (-sT) on ports 22/80/443/445/3389 reveals specific service interest: RDP (3389) and SMB (445) are typical lateral movement prerequisites.
 
@@ -130,7 +130,7 @@ alert tcp 10.0.30.0/24 any -> 10.0.20.0/24 [22,80,443,445,3389] (msg:"LOCAL Targ
 ```
 
 **Gap 2: No behavioral alert on recon binary density**
-Nine native recon binaries executed within seven minutes from a single parent session generates no alert by default. Individual binary executions are legitimate in isolation — the detection signal is density and sequence, not any single event.
+Nine native recon binaries executed within seven minutes from a single parent session generates no alert by default. Individual binary executions are legitimate in isolation. The detection signal is density and sequence, not any single event.
 
 **Fix:**
 Detection rule targeting recon binary burst from same parent within short window:
