@@ -236,5 +236,7 @@ soc-homelab/
 ## Author
 
 Farrukh Ejaz
+
 GitHub: https://github.com/farrukhCTI
+
 LinkedIn: https://linkedin.com/in/farrukhejazminhas
