@@ -6,6 +6,26 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 ---
 
+## Contents
+
+- [How to Review This Project](#how-to-review-this-project)
+- [What This Demonstrates](#what-this-demonstrates)
+- [Investigation Reports](#investigation-reports)
+- [Kibana Dashboards](#kibana-dashboards)
+- [Kill Chain Narrative](#kill-chain-narrative-ir-002-to-ir-005)
+- [Key Achievements](#key-achievements)
+- [Architecture Overview](#architecture-overview)
+- [Architecture Diagram](#architecture-diagram)
+- [Architecture Detailed](#architecture-detailed)
+- [Detection Pipelines](#detection-pipelines)
+- [Detection Engineering](#detection-engineering)
+- [Repository Structure](#repository-structure)
+- [Stack](#stack)
+- [Hardware](#hardware)
+- [Author](#author)
+
+---
+
 ## How to Review This Project
 
 1. Start with **IR-005**: full kill chain reconstruction from a single NDR alert anchor
@@ -14,7 +34,7 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 ---
 
-## What this demonstrates
+## What This Demonstrates
 
 - Correlated independent NDR and EDR telemetry to validate C2 activity across both network and endpoint layers
 - Reconstructed a full attack kill chain from a single Suricata alert using ProcessGuid chaining and timestamp pivoting
@@ -37,6 +57,12 @@ All five investigations cover a connected kill chain simulating LOLBin-based pre
 | IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Complete |
 
 IR-005 is the portfolio centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert by pivoting on timestamp, chaining ProcessGuid relationships, and validating activity independently across both EDR and NDR datasets.
+
+---
+
+## Kibana Dashboards
+
+Five Kibana dashboards visualize the kill chain data across both pipelines. Dashboard 4 (Cross-Layer Correlation) is the portfolio centrepiece: Sysmon and Suricata independently recorded the same 23 C2 connections with no shared data path. See [DASHBOARDS.md](DASHBOARDS.md) for the full dashboard index, panel breakdown, and screenshots.
 
 ---
 
@@ -77,7 +103,7 @@ The investigation begins with a network scan alert and expands through endpoint 
 
 ---
 
-## Architecture (Overview)
+## Architecture Overview
 
 Traffic between attacker and victim is forced through a monitored pfSense interface, ensuring all attack activity is observable by Suricata regardless of attacker behavior.
 
@@ -99,7 +125,7 @@ Traffic between attacker and victim is forced through a monitored pfSense interf
 
 ---
 
-## Architecture (Detailed)
+## Architecture Detailed
 
 ```
 192.168.100.0/24 - HOME LAN
@@ -197,6 +223,7 @@ Fires within 5 seconds of Nmap SYN scan initiation. Validated in IR-002.
 ```
 soc-homelab/
 +-- README.md
++-- DASHBOARDS.md
 +-- diagrams/
 |   +-- homelab-diagram.png
 +-- docker/
@@ -209,7 +236,16 @@ soc-homelab/
 |   +-- sysmon-config.xml
 +-- scripts/
 |   +-- Create-SysmonDetectionRules.ps1
++-- dashboards/
+|   +-- kibana-dashboards.ndjson
 +-- investigation-reports/
+    +-- dashboards/
+    |   +-- screenshots/
+    |       +-- 01-soc-overview.png
+    |       +-- 02-threat-activity.png
+    |       +-- 03-kill-chain-timeline.png
+    |       +-- 04-cross-layer-correlation.png
+    |       +-- 05-persistence-evasion.png
     +-- IR-001/
     |   +-- IR-001-tool-transfer-and-persistence.md
     |   +-- screenshots/
