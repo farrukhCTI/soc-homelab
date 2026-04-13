@@ -41,6 +41,7 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 - Engineered custom detection rules where standard tooling had documented blind spots
 - Incident response investigations mapped to MITRE ATT&CK with detection gap analysis and remediation design
 - Pipeline engineering to solve real infrastructure limitations, not just configure existing tools
+- Built a behavior-driven SOC investigation console (Argus) on top of the existing Elastic Stack, converting raw Sysmon telemetry into structured, MITRE-mapped behavior documents with a cursor-driven detection loop
 
 ---
 
@@ -79,8 +80,8 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 
 The investigation begins with a network scan alert and expands through endpoint telemetry to uncover execution, persistence, and defense evasion activity across a 2 hour 37 minute dwell window.
 
-**Kill chain window:** 2026-04-02 14:41 to 17:18
-**T=0:** Suricata SID 9000001 fires on Nmap SYN scan at 14:41:40
+**Kill chain window:** 2026-04-02 14:41 to 17:18  
+**T=0:** Suricata SID 9000001 fires on Nmap SYN scan at 14:41:40  
 **Endpoint:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2
 
 ---
@@ -100,6 +101,12 @@ The investigation begins with a network scan alert and expands through endpoint 
 - Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout, all techniques LOLBin-based, no malware required
 - Reconstructed the full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer correlation
 - Confirmed that endpoint and network telemetry independently corroborate the same C2 channel: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records, matching source IP, destination IP, and timestamp window, collected by two separate sensors with no shared data path
+
+### Argus: SOC Investigation Console (Phase 10, in progress)
+- Built a behavior detector that polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK techniques, and writes structured behavior documents to a dedicated index
+- Implemented deterministic document IDs using source event ID, making the pipeline fully idempotent across repeated runs
+- Validated with Atomic Red Team: 80 behaviors written across DISCOVERY and EXECUTION tactics from controlled technique execution on the victim endpoint
+- Argus is a FastAPI + vanilla HTML investigation console built on top of the existing Elastic Stack, not a replacement for it
 
 ---
 
@@ -238,6 +245,10 @@ soc-homelab/
 |   +-- Create-SysmonDetectionRules.ps1
 +-- dashboards/
 |   +-- kibana-dashboards.ndjson
++-- argus/
+|   +-- behavior_detector.py
+|   +-- hosts.json
+|   +-- ip_overrides.json
 +-- investigation-reports/
     +-- dashboards/
     |   +-- screenshots/
@@ -282,6 +293,7 @@ soc-homelab/
 | pfSense | CE 2.8.1 | Routing and IDS |
 | Proxmox | VE | Hypervisor (Node 2) |
 | Kali Linux | Latest | Attack platform |
+| Python | 3.14 | Argus behavior detector |
 
 ---
 
@@ -296,6 +308,6 @@ soc-homelab/
 
 ## Author
 
-Farrukh Ejaz
-GitHub: https://github.com/farrukhCTI
+Farrukh Ejaz  
+GitHub: https://github.com/farrukhCTI  
 LinkedIn: https://linkedin.com/in/farrukhejazminhas
