@@ -1,0 +1,7 @@
+{
+  "10.0.30.10": {
+    "risk": "HIGH_RISK",
+    "label": "Kali attacker VM",
+    "note": "RFC1918 — AbuseIPDB skipped, override applied"
+  }
+}
