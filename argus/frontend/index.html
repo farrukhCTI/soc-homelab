@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argus - Case Queue</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0e1a;
+            color: #e4e7eb;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #111827;
+            border-bottom: 1px solid #1f2937;
+            padding: 1rem 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f3f4f6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .case-card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .case-card:hover {
+            border-color: #374151;
+        }
+
+        .case-header {
+            padding: 1.25rem;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .case-id-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .case-id {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-open {
+            background: #065f46;
+            color: #6ee7b7;
+        }
+
+        .case-content {
+            flex: 1;
+        }
+
+        .grouped-by {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .case-time {
+            color: #6b7280;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .blast-radius {
+            display: flex;
+            gap: 1.5rem;
+            margin: 0.75rem 0;
+            font-size: 0.875rem;
+        }
+
+        .metric {
+            color: #9ca3af;
+        }
+
+        .metric strong {
+            color: #e4e7eb;
+            font-weight: 600;
+        }
+
+        .tactics {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+
+        .tactic-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .case-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .risk-score {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #f3f4f6;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .risk-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .severity {
+            padding: 0.375rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity.critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+            box-shadow: 0 0 12px rgba(220, 38, 38, 0.4);
+        }
+
+        .severity.high {
+            background: #991b1b;
+            color: #fca5a5;
+            box-shadow: 0 0 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .severity.medium {
+            background: #92400e;
+            color: #fcd34d;
+        }
+
+        .severity.low {
+            background: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .risk-score {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f3f4f6;
+        }
+
+        .behavior-count {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .behaviors-list {
+            display: none;
+            border-top: 1px solid #1f2937;
+            background: #0a0e1a;
+        }
+
+        .behaviors-list.expanded {
+            display: block;
+        }
+
+        .behaviors-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .behaviors-table th {
+            background: #111827;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .behaviors-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #1f2937;
+            font-size: 0.875rem;
+        }
+
+        .behaviors-table tr:hover {
+            background: #111827;
+        }
+
+        .behavior-time {
+            color: #9ca3af;
+            font-size: 0.8rem;
+        }
+
+        .behavior-desc {
+            color: #e4e7eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #9ca3af;
+        }
+
+        .error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        .expand-icon {
+            transition: transform 0.2s;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin: -0.5rem;
+            user-select: none;
+        }
+
+        .expand-icon:hover {
+            color: #9ca3af;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Argus - Case Queue</h1>
+    </div>
+
+    <div class="container">
+        <div id="case-list">
+            <div class="loading">Loading cases...</div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch cases from API
+        async function loadCases() {
+            try {
+                const response = await fetch('/api/cases');
+                const data = await response.json();
+                
+                if (!data.ok) {
+                    showError(data.error || 'Unknown error');
+                    return;
+                }
+                
+                renderCases(data.cases);
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // Render case cards
+        function renderCases(cases) {
+            const container = document.getElementById('case-list');
+            
+            if (cases.length === 0) {
+                container.innerHTML = '<div class="loading">No cases found</div>';
+                return;
+            }
+            
+            container.innerHTML = cases.map(c => `
+                <div class="case-card">
+                    <div class="case-header">
+                        <div class="case-id-section">
+                            <div class="case-id">${c.case_id}</div>
+                            <span class="status-badge status-${c.status.toLowerCase()}">${c.status}</span>
+                        </div>
+                        
+                        <div class="case-content">
+                            <div class="grouped-by">
+                                ${c.grouped_by?.reason || 'No grouping reason'}
+                            </div>
+                            
+                            ${c.grouped_by?.time_window ? `<div class="case-time">${c.grouped_by.time_window}</div>` : ''}
+                            
+                            <div class="blast-radius">
+                                <span class="metric"><strong>${c.blast_radius.hosts_affected}</strong> hosts</span>
+                                <span class="metric"><strong>${c.blast_radius.users_involved}</strong> users</span>
+                                <span class="metric"><strong>${c.blast_radius.ips_contacted}</strong> IPs</span>
+                                <span class="metric"><strong>${c.blast_radius.processes_spawned}</strong> processes</span>
+                            </div>
+                            
+                            <div class="tactics">
+                                ${c.tactics_seen.map(t => `<span class="tactic-badge">${t}</span>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="case-meta">
+                            <div>
+                                <div class="risk-label">Risk</div>
+                                <div class="risk-score">${Math.round(c.risk_score)}</div>
+                            </div>
+                            <span class="severity ${c.highest_severity.toLowerCase()}">${c.highest_severity}</span>
+                            <div class="behavior-count">${c.behavior_count} behaviors</div>
+                            <div class="expand-icon" onclick="toggleBehaviors('${c.case_id}'); event.stopPropagation();">▼</div>
+                        </div>
+                    </div>
+                    
+                    <div class="behaviors-list" id="behaviors-${c.case_id}">
+                        <div class="loading">Loading behaviors...</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle behavior list expansion
+        async function toggleBehaviors(caseId) {
+            const listEl = document.getElementById(`behaviors-${caseId}`);
+            const cardEl = listEl.closest('.case-card');
+            const iconEl = cardEl.querySelector('.expand-icon');
+            
+            if (listEl.classList.contains('expanded')) {
+                listEl.classList.remove('expanded');
+                iconEl.classList.remove('expanded');
+                return;
+            }
+            
+            // Load behaviors if not already loaded
+            if (listEl.innerHTML.includes('Loading')) {
+                await loadBehaviors(caseId);
+            }
+            
+            listEl.classList.add('expanded');
+            iconEl.classList.add('expanded');
+        }
+
+        // Load behaviors for a case
+        async function loadBehaviors(caseId) {
+            const listEl = document.getElementById(`behaviors-${caseId}`);
+            
+            try {
+                const response = await fetch(`/api/cases/${caseId}/behaviors`);
+                const data = await response.json();
+                
+                if (!data.ok) {
+                    listEl.innerHTML = `<div class="error">Error: ${data.error || 'Unknown error'}</div>`;
+                    return;
+                }
+                
+                renderBehaviors(listEl, data.behaviors);
+            } catch (error) {
+                listEl.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Render behaviors table
+        function renderBehaviors(container, behaviors) {
+            if (behaviors.length === 0) {
+                container.innerHTML = '<div class="loading">No behaviors found</div>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <table class="behaviors-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Host</th>
+                            <th>Behavior</th>
+                            <th>Tactic</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${behaviors.map(b => `
+                            <tr>
+                                <td class="behavior-time">${formatTime(b.timestamp)}</td>
+                                <td>${b.host}</td>
+                                <td class="behavior-desc">${b.description}</td>
+                                <td><span class="tactic-badge">${b.tactic}</span></td>
+                                <td><span class="severity ${b.severity.toLowerCase()}">${b.severity}</span></td>
+                                <td>${b.status}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Format timestamp
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Show error
+        function showError(message) {
+            const container = document.getElementById('case-list');
+            container.innerHTML = `<div class="error">Error loading cases: ${message}</div>`;
+        }
+
+        // Load cases on page load
+        loadCases();
+    </script>
+</body>
+</html>

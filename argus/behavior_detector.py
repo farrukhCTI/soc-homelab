@@ -26,6 +26,16 @@ MITRE_MAP = {
     "cmd.exe":        ("T1059.003", "EXECUTION",       "Windows Command Shell"),
 }
 
+# Tactic-based severity and priority scoring
+TACTIC_WEIGHTS = {
+    "DISCOVERY":       {"severity": "LOW",      "priority_score": 20},
+    "EXECUTION":       {"severity": "MEDIUM",   "priority_score": 60},
+    "PERSISTENCE":     {"severity": "HIGH",     "priority_score": 80},
+    "DEFENSE_EVASION": {"severity": "MEDIUM",   "priority_score": 70},
+    "C2":              {"severity": "HIGH",     "priority_score": 90},
+    "CREDENTIAL":      {"severity": "HIGH",     "priority_score": 85},
+}
+
 # Start from 1 hour ago on first run
 last_seen = None
 
@@ -73,6 +83,12 @@ def run_detection():
 
         if matched_proc:
             technique, tactic, description = MITRE_MAP[matched_proc]
+            
+            # Get tactic-based severity and priority_score
+            weights = TACTIC_WEIGHTS.get(tactic, {"severity": "LOW", "priority_score": 50})
+            severity = weights["severity"]
+            priority_score = weights["priority_score"]
+            
             behavior_doc = {
                 "behavior_id":     "BEH-" + doc_id[:8].upper(),
                 "host":            host,
@@ -83,7 +99,8 @@ def run_detection():
                 "tactic":          tactic,
                 "mitre_technique": technique,
                 "description":     description,
-                "severity":        "LOW",
+                "severity":        severity,
+                "priority_score":  priority_score,
                 "status":          "NEW",
                 "fire_reasons":    [
                     f"{matched_proc} execution detected",
