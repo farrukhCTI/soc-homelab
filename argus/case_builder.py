@@ -2,7 +2,7 @@
 case_builder.py
 
 Reads argus-behaviors-*, groups behaviors into cases.
-Grouping rule: behaviors sharing host + 30min window = one case.
+Grouping rule: behaviors sharing host + 10min window = one case.
 
 Run once, processes all behaviors without case_id assigned.
 Writes to argus-cases-* index.
@@ -18,7 +18,7 @@ import os
 import time
 
 # ES connection - matches behavior_detector.py pattern
-ES_URL  = os.environ.get("ES_URL", "http://192.168.100.143:9200")
+ES_URL  = os.environ.get("ES_URL", "http://localhost:9200")
 ES_USER = os.environ.get("ES_USER", "elastic")
 ES_PASS = os.environ.get("ES_PASS", "")
 
@@ -71,31 +71,34 @@ def get_unassigned_behaviors():
 
 def group_behaviors(behaviors):
     """
-    Group behaviors by: same host + 30min window.
-    
+    Group behaviors by: same host + 10min window.
+
+    10min window forces tighter grouping — prevents random spread
+    from accumulating into a case over half an hour.
+
     REMOVED tactic constraint to allow multi-tactic incident chains like:
     DISCOVERY → EXECUTION → PERSISTENCE in one case.
-    
+
     Prioritization now handled by severity multiplier at case level.
-    
+
     Returns list of group dicts with items and metadata.
     """
     groups = []
-    
+
     for doc_id, behavior in behaviors:
         ts = datetime.fromisoformat(behavior['timestamp'].replace('Z', '+00:00'))
-        host = behavior.get('host', '').lower()
-        
+        host = (behavior.get('host') or '').lower()
+
         # Try to add to existing group
         added = False
         for group in groups:
-            # Same host and within 30min of latest event in group?
-            if group['host'] == host and abs((ts - group['latest_ts']).total_seconds()) <= 1800:
+            # Same host and within 10min of latest event in group?
+            if group['host'] == host and abs((ts - group['latest_ts']).total_seconds()) <= 600:
                 group['items'].append((doc_id, behavior))
                 group['latest_ts'] = ts  # Update latest timestamp
                 added = True
                 break
-        
+
         if not added:
             # Create new group with metadata
             groups.append({
@@ -167,7 +170,7 @@ def compute_grouped_by(behaviors):
         grouped_by['time_window'] = window
     
     # Readable reason field for UI
-    grouped_by['reason'] = f"{len(behaviors)} behaviors in 30min window"
+    grouped_by['reason'] = f"{len(behaviors)} behaviors in 10min window"
     
     return grouped_by
 
@@ -240,6 +243,10 @@ def create_case(group, case_id):
     
     return case_id
 
+# Per-host cooldown — prevents duplicate cases from the same burst
+# being created across consecutive 60s polling cycles.
+LAST_CASE_TS = {}
+
 def run_once():
     """Single case building cycle - process all unassigned behaviors."""
     # Get behaviors without case_id
@@ -252,33 +259,71 @@ def run_once():
     # Sort explicitly by timestamp to guarantee ordering
     behavior_docs.sort(key=lambda x: x[1]['timestamp'])
     
-    # Group by host + tactic + 30min window
+    # Group by host + 10min window
     groups = group_behaviors(behavior_docs)
     
-    # Filter out groups with fewer than 3 behaviors
-    MIN_CASE_SIZE = 3
-    valid_groups = [g for g in groups if len(g['items']) >= MIN_CASE_SIZE]
-    small_groups = [g for g in groups if len(g['items']) < MIN_CASE_SIZE]
+    # Filter out groups that don't meet signal thresholds.
+    # MIN_CASE_SIZE=5: noise bursts (1-4 behaviors) don't form cases.
+    # MIN_TACTICS=2: single-tactic spam (pure DISCOVERY flood) doesn't form a case.
+    # is_dense: at least 3 events within 2 minutes — burst vs slow scatter.
+    # cooldown: 15min per host — prevents one burst spawning multiple cases.
+    MIN_CASE_SIZE = 5
+    MIN_TACTICS   = 2
+    COOLDOWN_SECS = 900  # 15 minutes
+
+    def tactic_count(group):
+        return len(set(beh.get('tactic','') for _, beh in group['items'] if beh.get('tactic')))
+
+    def is_dense(group):
+        """True if at least 3 events occur within any 2-minute window."""
+        timestamps = sorted([
+            datetime.fromisoformat(beh['timestamp'].replace('Z', '+00:00'))
+            for _, beh in group['items']
+        ])
+        if len(timestamps) < 3:
+            return False
+        for i in range(len(timestamps) - 2):
+            if (timestamps[i+2] - timestamps[i]).total_seconds() <= 120:
+                return True
+        return False
+
+    now = datetime.now(UTC)
+
+    def not_on_cooldown(group):
+        host = group['host']
+        if host not in LAST_CASE_TS:
+            return True
+        return (now - LAST_CASE_TS[host]).total_seconds() >= COOLDOWN_SECS
+
+    valid_groups = [g for g in groups
+                    if len(g['items']) >= MIN_CASE_SIZE
+                    and tactic_count(g) >= MIN_TACTICS
+                    and is_dense(g)
+                    and not_on_cooldown(g)]
+
+    noise_groups = [g for g in groups
+                    if g not in valid_groups]
     
-    # Mark small groups as NOISE instead of discarding
-    if small_groups:
-        total_noise = sum(len(g['items']) for g in small_groups)
-        for group in small_groups:
+    # Mark rejected groups as NOISE
+    if noise_groups:
+        total_noise = sum(len(g['items']) for g in noise_groups)
+        for group in noise_groups:
             for doc_id, beh in group['items']:
                 es.update(
                     index="argus-behaviors",
                     id=doc_id,
                     body={"doc": {"case_id": "NOISE", "status": "NOISE"}}
                 )
-        print(f"[INFO] Marked {len(small_groups)} small groups ({total_noise} behaviors) as NOISE")
+        print(f"[INFO] Marked {len(noise_groups)} groups ({total_noise} behaviors) as NOISE")
     
     # Get starting case number
     next_case_num = get_last_case_number()
     
-    # Create one case per valid group with pre-generated IDs
+    # Create one case per valid group — update cooldown timestamp per host
     for i, group in enumerate(valid_groups):
         case_id = f"CASE-{next_case_num + i + 1:03d}"
         create_case(group, case_id)
+        LAST_CASE_TS[group['host']] = datetime.now(UTC)  # start cooldown
     
     print(f"[DONE] Created {len(valid_groups)} cases")
 
@@ -293,7 +338,7 @@ def main():
             print("\n[STOP] case_builder daemon stopped")
             break
         except Exception as e:
-            print(f"[ERROR] {e}")
+            import traceback; traceback.print_exc()
         
         time.sleep(60)
 

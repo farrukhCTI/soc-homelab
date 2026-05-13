@@ -2,7 +2,7 @@
 
 **Focus:** SOC Analyst | Detection Engineering | Incident Response
 
-This lab demonstrates how a single network alert can be expanded into a full kill chain investigation using endpoint telemetry and cross-layer correlation.
+This lab demonstrates how a single network alert can be expanded into a full kill chain investigation using endpoint telemetry and cross-layer correlation. It also hosts **Argus**, a custom SOC investigation console built on top of the Elastic Stack.
 
 ---
 
@@ -10,6 +10,7 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 - [How to Review This Project](#how-to-review-this-project)
 - [What This Demonstrates](#what-this-demonstrates)
+- [Argus: SOC Investigation Console](#argus-soc-investigation-console)
 - [Investigation Reports](#investigation-reports)
 - [Kibana Dashboards](#kibana-dashboards)
 - [Kill Chain Narrative](#kill-chain-narrative-ir-002-to-ir-005)
@@ -30,7 +31,8 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 1. Start with **IR-005**: full kill chain reconstruction from a single NDR alert anchor
 2. Refer to **IR-002 through IR-004** for individual attack stages
-3. Use screenshots and raw events in each report folder for validation
+3. See **[ARGUS.md](argus/ARGUS.md)** for the SOC investigation console built on top of this lab
+4. Use screenshots and raw events in each report folder for validation
 
 ---
 
@@ -41,7 +43,17 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 - Engineered custom detection rules where standard tooling had documented blind spots
 - Incident response investigations mapped to MITRE ATT&CK with detection gap analysis and remediation design
 - Pipeline engineering to solve real infrastructure limitations, not just configure existing tools
-- Built a behavior-driven SOC investigation console (Argus) on top of the existing Elastic Stack, converting raw Sysmon telemetry into structured, MITRE-mapped behavior documents with a cursor-driven detection loop
+- Built Argus, a full SOC investigation console on top of the existing Elastic Stack with AI-assisted analyst briefings, process tree reconstruction, hunt workbench, and analyst action trail
+
+---
+
+## Argus: SOC Investigation Console
+
+Argus is a behavior-driven SOC investigation console built on top of this lab's Elastic Stack. It runs three Python daemons continuously: a behavior detector that polls Sysmon telemetry every 60 seconds and maps events to 96 MITRE-mapped detection rules, a case builder that groups behaviors into cases using a 10-minute sliding window with density requirements, and a FastAPI backend serving a React frontend.
+
+The frontend is a workstation-style layout: case queue on the left, process tree investigation workspace in the center, AI briefing and analyst actions on the right. Claude Haiku is integrated at three points — case summaries, behavior-level briefings with next steps, and a hunt workbench co-pilot. All AI output is narration only. Detection and scoring are fully deterministic.
+
+**See [ARGUS.md](argus/ARGUS.md) for full documentation and screenshots.**
 
 ---
 
@@ -80,8 +92,8 @@ T1033, T1016        T1071.001, T1105        T1562.001, T1036          timeline
 
 The investigation begins with a network scan alert and expands through endpoint telemetry to uncover execution, persistence, and defense evasion activity across a 2 hour 37 minute dwell window.
 
-**Kill chain window:** 2026-04-02 14:41 to 17:18  
-**T=0:** Suricata SID 9000001 fires on Nmap SYN scan at 14:41:40  
+**Kill chain window:** 2026-04-02 14:41 to 17:18
+**T=0:** Suricata SID 9000001 fires on Nmap SYN scan at 14:41:40
 **Endpoint:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2
 
 ---
@@ -102,11 +114,15 @@ The investigation begins with a network scan alert and expands through endpoint 
 - Reconstructed the full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer correlation
 - Confirmed that endpoint and network telemetry independently corroborate the same C2 channel: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records, matching source IP, destination IP, and timestamp window, collected by two separate sensors with no shared data path
 
-### Argus: SOC Investigation Console (Phase 10, in progress)
-- Built a behavior detector that polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK techniques, and writes structured behavior documents to a dedicated index
-- Implemented deterministic document IDs using source event ID, making the pipeline fully idempotent across repeated runs
-- Validated with Atomic Red Team: 80 behaviors written across DISCOVERY and EXECUTION tactics from controlled technique execution on the victim endpoint
-- Argus is a FastAPI + vanilla HTML investigation console built on top of the existing Elastic Stack, not a replacement for it
+### Argus: SOC Investigation Console
+- Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
+- Case builder groups behaviors into cases using a 10-minute sliding window, density check, and multi-tactic requirement — prevents noise from generating false cases
+- React workstation shell with persistent case queue, canvas-based process tree with zoom, pan, hover path tracing and node click, behavior timeline, detection logic, and raw events tabs
+- Claude Haiku integrated at three points: case summaries, per-behavior analyst briefings with next steps, and hunt workbench co-pilot — narration only, never used for scoring or detection
+- Hunt workbench with 7 ES|QL templates covering rare parent-child pairs, encoded PowerShell, scheduled task creation, network connections by process, registry persistence, LOLBin execution, and lateral movement patterns
+- Full analyst action trail: ESCALATE, BLOCK IP, ADD NOTE all written back to Elasticsearch with timestamps
+- Background automation: victim VM runs Atomic Red Team techniques probabilistically every 30 minutes via Task Scheduler, keeping the lab producing telemetry autonomously
+- See [ARGUS.md](argus/ARGUS.md) for full documentation and screenshots
 
 ---
 
@@ -246,36 +262,30 @@ soc-homelab/
 +-- dashboards/
 |   +-- kibana-dashboards.ndjson
 +-- argus/
+|   +-- ARGUS.md
 |   +-- behavior_detector.py
-|   +-- hosts.json
-|   +-- ip_overrides.json
+|   +-- case_builder.py
+|   +-- process_tree_builder.py
+|   +-- hunt_engine.py
+|   +-- app.py
+|   +-- start_argus.ps1
+|   +-- frontend-react/
+|   +-- screenshots/
+|       +-- Case_Queue_.png
+|       +-- Case_selected.png
+|       +-- Process_Tree_Full_Chain.png
+|       +-- Process_tree.png
+|       +-- Timeline.png
+|       +-- Hunt_Workbench.png
+|       +-- Hunt_Workbench_Claude_Integration.png
 +-- investigation-reports/
     +-- dashboards/
     |   +-- screenshots/
-    |       +-- 01-soc-overview.png
-    |       +-- 02-threat-activity.png
-    |       +-- 03-kill-chain-timeline.png
-    |       +-- 04-cross-layer-correlation.png
-    |       +-- 05-persistence-evasion.png
     +-- IR-001/
-    |   +-- IR-001-tool-transfer-and-persistence.md
-    |   +-- screenshots/
     +-- IR-002/
-    |   +-- IR-002-reconnaissance-and-host-discovery.md
-    |   +-- screenshots/
-    |   +-- raw-events/
     +-- IR-003/
-    |   +-- IR-003-encoded-execution-and-c2-beaconing.md
-    |   +-- screenshots/
-    |   +-- raw-events/
     +-- IR-004/
-    |   +-- IR-004-defense-evasion-and-persistence.md
-    |   +-- screenshots/
-    |   +-- raw-events/
     +-- IR-005/
-        +-- IR-005-correlated-kill-chain-hunt.md
-        +-- screenshots/
-        +-- raw-events/
 ```
 
 ---
@@ -293,7 +303,10 @@ soc-homelab/
 | pfSense | CE 2.8.1 | Routing and IDS |
 | Proxmox | VE | Hypervisor (Node 2) |
 | Kali Linux | Latest | Attack platform |
-| Python | 3.14 | Argus behavior detector |
+| Python | 3.14 | Argus daemons |
+| React 18 + TypeScript | Vite 8 | Argus frontend |
+| FastAPI | Latest | Argus API backend |
+| Claude Haiku | claude-haiku-4-5 | Argus AI narration layer |
 
 ---
 
@@ -308,6 +321,6 @@ soc-homelab/
 
 ## Author
 
-Farrukh Ejaz  
-GitHub: https://github.com/farrukhCTI  
+Farrukh Ejaz
+GitHub: https://github.com/farrukhCTI
 LinkedIn: https://linkedin.com/in/farrukhejazminhas

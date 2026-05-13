@@ -1,0 +1,43 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0: #080a0d;
+  --bg1: #0d1017;
+  --bg2: #111520;
+  --bg3: #161b26;
+  --bg4: #1c2230;
+  --bg5: #222a38;
+  --ln:  rgba(255,255,255,0.055);
+  --ln2: rgba(255,255,255,0.09);
+  --ln3: rgba(255,255,255,0.14);
+  --t1: #dde2ea;
+  --t2: #6e7a8a;
+  --t3: #363e4a;
+  --t4: #22282f;
+  --red:   #e5534b;
+  --red2:  rgba(229,83,75,0.07);
+  --red3:  rgba(229,83,75,0.22);
+  --amb:   #c98a3a;
+  --amb2:  rgba(201,138,58,0.08);
+  --amb3:  rgba(201,138,58,0.22);
+  --teal:  #3db890;
+  --teal2: rgba(61,184,144,0.07);
+  --teal3: rgba(61,184,144,0.18);
+  --blue:  #4a8fc4;
+  --blue2: rgba(74,143,196,0.08);
+  --blue3: rgba(74,143,196,0.22);
+  --pur:   #7b6dd4;
+  --pur2:  rgba(123,109,212,0.08);
+  --pur3:  rgba(123,109,212,0.20);
+  --grn:   #3fa06a;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg0);
+  color: var(--t1);
+  font-family: system-ui, sans-serif;
+}

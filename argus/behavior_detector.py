@@ -3,7 +3,7 @@ import os
 import time
 from datetime import datetime, timezone
 
-ES_URL  = os.environ.get("ES_URL", "http://192.168.100.143:9200")
+ES_URL  = os.environ.get("ES_URL", "http://localhost:9200")
 ES_USER = os.environ.get("ES_USER", "elastic")
 ES_PASS = os.environ.get("ES_PASS", "")
 
