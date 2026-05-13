@@ -28,7 +28,7 @@ Three Python daemons run continuously in the background:
 
 ### Case Queue
 
-![Case Queue](screenshots/Case_Queue_.png)
+![Case Queue](screenshots/case_queue.png)
 
 The left rail is the case queue. Every case shows the case ID, behavior count, time window, severity badge, risk score, and a sparkline of behavior volume over time. The red dot on the top case is a live pulse indicator showing the most recently active case.
 
@@ -40,7 +40,7 @@ The center workspace defaults to "select a case from the queue" until a case is 
 
 ### Case Selected — AI Case Summary
 
-![Case Selected](screenshots/Case_selected.png)
+![Case Selected](screenshots/case_selected.png)
 
 Clicking a case loads the investigation workspace. The case header shows severity, behavior count, time window, host, risk score, and the tactics involved (EXECUTION, DISCOVERY, PERSISTENCE as chips).
 
@@ -52,7 +52,7 @@ The process tree loads in the center workspace automatically.
 
 ### Process Tree — Full Chain
 
-![Process Tree Full Chain](screenshots/Process_Tree_Full_Chain.png)
+![Process Tree Full Chain](screenshots/process_tree_full_chain.png)
 
 The process tree is built from raw Sysmon EID 1 events using a 30-minute window around the case. It reconstructs the full parent-child process chain from the richest attack subtree in the data.
 
@@ -66,7 +66,7 @@ The behavior timeline strip at the bottom shows 107 events plotted chronological
 
 ### Process Tree — Node Click and AI Briefing
 
-![Process Tree with AI Briefing](screenshots/Process_tree.png)
+![Process Tree with AI Briefing](screenshots/process_tree_node_click.png)
 
 Clicking any node pins the investigation to that specific behavior. The system matches the node's PID against the behavior documents for that case and loads the Claude Haiku briefing for the matched behavior.
 
@@ -84,7 +84,7 @@ This is the core investigation loop: tree → click → briefing → next steps.
 
 ### Behavior Timeline
 
-![Timeline](screenshots/Timeline.png)
+![Timeline](screenshots/timeline.png)
 
 The Timeline tab shows all 107 behaviors for this case in chronological order. Each row shows the UTC timestamp, tactic label (DISCOVERY in blue, EXECUTION in orange), and behavior description.
 
@@ -94,7 +94,7 @@ This view is useful for understanding sequencing. You can see the attack pattern
 
 ### Hunt Workbench
 
-![Hunt Workbench](screenshots/Hunt_Workbench.png)
+![Hunt Workbench](screenshots/hunt_workbench.png)
 
 The Hunt Workbench gives the analyst 7 ES|QL-based hunt templates. The sidebar lists all templates. Selecting one shows the description, parameters, and a Run Hunt button.
 
@@ -106,7 +106,7 @@ The Ask Claude button at the top right of the results panel sends the results to
 
 ### Hunt Workbench — Claude Co-pilot
 
-![Hunt Workbench with Claude](screenshots/Hunt_Workbench_Claude_Integration.png)
+![Hunt Workbench with Claude](screenshots/hunt_workbench_copilot.png)
 
 After a hunt run, clicking Ask Claude sends the results to Claude Haiku for interpretation. The co-pilot returns a structured analysis: summary of what the hunt found, bullet-point findings for each notable result, recommended actions, and MITRE ATT&CK tags.
 
