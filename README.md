@@ -51,7 +51,7 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 Argus is a behavior-driven SOC investigation console built on top of this lab's Elastic Stack. It runs three Python daemons continuously: a behavior detector that polls Sysmon telemetry every 60 seconds and maps events to 96 MITRE-mapped detection rules, a case builder that groups behaviors into cases using a 10-minute sliding window with density requirements, and a FastAPI backend serving a React frontend.
 
-The frontend is a workstation-style layout: case queue on the left, process tree investigation workspace in the center, AI briefing and analyst actions on the right. Claude Haiku is integrated at three points — case summaries, behavior-level briefings with next steps, and a hunt workbench co-pilot. All AI output is narration only. Detection and scoring are fully deterministic.
+The frontend is a workstation-style layout: case queue on the left, process tree investigation workspace in the center, AI briefing and analyst actions on the right. Claude Haiku is integrated at three points: case summaries, behavior-level briefings with next steps, and a hunt workbench co-pilot. All AI output is narration only. Detection and scoring are fully deterministic.
 
 **See [ARGUS.md](argus/ARGUS.md) for full documentation and screenshots.**
 
@@ -116,9 +116,9 @@ The investigation begins with a network scan alert and expands through endpoint 
 
 ### Argus: SOC Investigation Console
 - Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
-- Case builder groups behaviors into cases using a 10-minute sliding window, density check, and multi-tactic requirement — prevents noise from generating false cases
+- Case builder groups behaviors into cases using a 10-minute sliding window, density check, and multi-tactic requirement: prevents noise from generating false cases
 - React workstation shell with persistent case queue, canvas-based process tree with zoom, pan, hover path tracing and node click, behavior timeline, detection logic, and raw events tabs
-- Claude Haiku integrated at three points: case summaries, per-behavior analyst briefings with next steps, and hunt workbench co-pilot — narration only, never used for scoring or detection
+- Claude Haiku integrated at three points: case summaries, per-behavior analyst briefings with next steps, and hunt workbench co-pilot: narration only, never used for scoring or detection
 - Hunt workbench with 7 ES|QL templates covering rare parent-child pairs, encoded PowerShell, scheduled task creation, network connections by process, registry persistence, LOLBin execution, and lateral movement patterns
 - Full analyst action trail: ESCALATE, BLOCK IP, ADD NOTE all written back to Elasticsearch with timestamps
 - Background automation: victim VM runs Atomic Red Team techniques probabilistically every 30 minutes via Task Scheduler, keeping the lab producing telemetry autonomously

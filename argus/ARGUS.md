@@ -1,6 +1,6 @@
-# Argus — SOC Investigation Console
+# Argus: SOC Investigation Console
 
-Argus is a behavior-driven SOC investigation console built on top of Elasticsearch. It sits over two live telemetry pipelines — Sysmon (EDR) and Suricata (NDR) — and converts raw endpoint events into structured, MITRE-mapped cases that an analyst can investigate without ever touching Kibana.
+Argus is a behavior-driven SOC investigation console built on top of Elasticsearch. It sits over two live telemetry pipelines: Sysmon (EDR) and Suricata (NDR): and converts raw endpoint events into structured, MITRE-mapped cases that an analyst can investigate without ever touching Kibana.
 
 It runs on the same two-node homelab documented in the main README. No cloud. No SaaS. Two old Dell boxes.
 
@@ -38,19 +38,19 @@ The center workspace defaults to "select a case from the queue" until a case is 
 
 ---
 
-### Case Selected — AI Case Summary
+### Case Selected: AI Case Summary
 
 ![Case Selected](screenshots/case_selected.png)
 
 Clicking a case loads the investigation workspace. The case header shows severity, behavior count, time window, host, risk score, and the tactics involved (EXECUTION, DISCOVERY, PERSISTENCE as chips).
 
-The right rail Intel tab immediately shows a Claude Haiku-generated case summary. This is cached in Elasticsearch on first generation and served instantly on subsequent loads. The summary is narration only — it describes what happened, it does not make decisions.
+The right rail Intel tab immediately shows a Claude Haiku-generated case summary. This is cached in Elasticsearch on first generation and served instantly on subsequent loads. The summary is narration only: it describes what happened, it does not make decisions.
 
 The process tree loads in the center workspace automatically.
 
 ---
 
-### Process Tree — Full Chain
+### Process Tree: Full Chain
 
 ![Process Tree Full Chain](screenshots/process_tree_full_chain.png)
 
@@ -64,7 +64,7 @@ The behavior timeline strip at the bottom shows 107 events plotted chronological
 
 ---
 
-### Process Tree — Node Click and AI Briefing
+### Process Tree: Node Click and AI Briefing
 
 ![Process Tree with AI Briefing](screenshots/process_tree_node_click.png)
 
@@ -104,7 +104,7 @@ The Ask Claude button at the top right of the results panel sends the results to
 
 ---
 
-### Hunt Workbench — Claude Co-pilot
+### Hunt Workbench: Claude Co-pilot
 
 ![Hunt Workbench with Claude](screenshots/hunt_workbench_copilot.png)
 
@@ -146,9 +146,9 @@ Windows 10 Victim (10.0.20.10)
 
 Claude Haiku is used at three points only:
 
-1. Case summary — 1-2 sentence description of what the case represents, cached in ES
-2. Behavior briefing — per-node analysis with next steps, cached in argus-briefings index
-3. Hunt co-pilot — interpretation of hunt results on demand
+1. Case summary: 1-2 sentence description of what the case represents, cached in ES
+2. Behavior briefing: per-node analysis with next steps, cached in argus-briefings index
+3. Hunt co-pilot: interpretation of hunt results on demand
 
 It is narration only. Risk scoring, behavior detection, and case building are all deterministic. Claude never makes a triage decision.
 
