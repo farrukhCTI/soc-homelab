@@ -1,6 +1,6 @@
 import { useArgus } from "../ArgusContext"
 
-type View = "investigation" | "actions" | "hunt"
+type View = "investigation" | "actions" | "hunt" | "coverage"
 
 interface Props {
   view: View
@@ -11,6 +11,7 @@ const NAV_TABS: { key: View; label: string }[] = [
   { key: "investigation", label: "Investigation" },
   { key: "actions",       label: "Actions Log" },
   { key: "hunt",          label: "Hunt Workbench" },
+  { key: "coverage",      label: "Coverage Map" },
 ]
 
 export default function TopBar({ view, setView }: Props) {

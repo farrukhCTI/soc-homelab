@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useArgus } from "../ArgusContext"
 import { useQuery } from "@tanstack/react-query"
 import { fetchHuntTemplates } from "../api"
 import type { HuntTemplate } from "../types"
@@ -19,11 +20,32 @@ export default function HuntWorkbench() {
   const [copilot, setCopilot] = useState<Record<string, any> | null>(null)
   const [copilotLoading, setCopilotLoading] = useState(false)
 
+  const { huntPivot, setHuntPivot } = useArgus()
+
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["hunt-templates"],
     queryFn: fetchHuntTemplates,
     staleTime: Infinity,
   })
+
+  // Consume pivot from CrossLayerTab — pre-fill template + params
+  useEffect(() => {
+    if (!huntPivot || templates.length === 0) return
+    const tpl = templates.find((t: any) => t.id === huntPivot.templateId)
+    if (!tpl) return
+    setActiveId(huntPivot.templateId)
+    setResult(null)
+    setCopilot(null)
+    setRunError(null)
+    // Merge defaults with pivot params
+    const defaults: Record<string, any> = {}
+    Object.entries(tpl.params).forEach(([k, v]: [string, any]) => {
+      if (v.default !== undefined) defaults[k] = v.default
+    })
+    setParams({ ...defaults, ...huntPivot.params })
+    // Clear pivot so it doesn't re-trigger
+    setHuntPivot(null)
+  }, [huntPivot, templates])
 
   const activeTemplate = templates.find((t: HuntTemplate) => t.id === activeId)
 
@@ -131,6 +153,27 @@ export default function HuntWorkbench() {
         ) : (
           <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
 
+            {/* Pivot source banner — shown when navigated from CrossLayerTab */}
+            {params._pivotLabel && (
+              <div style={{
+                marginBottom: 12, padding: "6px 10px",
+                background: "var(--bg2)", border: "1px solid var(--ln)",
+                borderLeft: "3px solid var(--teal)", borderRadius: 2,
+                display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--teal)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  Pivot
+                </span>
+                <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t2)" }}>
+                  {params._pivotLabel}
+                </span>
+                {params._sourceCase && (
+                  <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", marginLeft: 4 }}>
+                    from {params._sourceCase}
+                  </span>
+                )}
+              </div>
+            )}
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: "var(--t1)", marginBottom: 4 }}>{activeTemplate.name}</div>
               <div style={{ fontSize: 11, color: "var(--t2)", lineHeight: 1.5 }}>{activeTemplate.description}</div>

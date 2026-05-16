@@ -31,8 +31,9 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 1. Start with **IR-005**: full kill chain reconstruction from a single NDR alert anchor
 2. Refer to **IR-002 through IR-004** for individual attack stages
-3. See **[ARGUS.md](argus/ARGUS.md)** for the SOC investigation console built on top of this lab
-4. Use screenshots and raw events in each report folder for validation
+3. See **IR-006** for a complete end-to-end investigation conducted inside Argus: process tree, cross-layer corroboration, entity pivot, and analyst action trail
+4. See **[ARGUS.md](argus/ARGUS.md)** for the SOC investigation console built on top of this lab
+5. Use screenshots and raw events in each report folder for validation
 
 ---
 
@@ -59,17 +60,20 @@ The frontend is a workstation-style layout: case queue on the left, process tree
 
 ## Investigation Reports
 
-All five investigations cover a connected kill chain simulating LOLBin-based pre-ransomware operator behavior on a defended Windows 10 endpoint (Defender ON, UAC ON throughout).
+IR-001 through IR-005 cover a connected kill chain simulating LOLBin-based post-compromise operator behavior on a defended Windows 10 endpoint (Defender ON, UAC ON throughout). IR-006 is a separate controlled simulation conducted entirely inside Argus, demonstrating the full investigation workflow from case triage through cross-layer corroboration and hunt pivot.
 
-| Report | Title | MITRE TTPs | Status |
-|---|---|---|---|
-| IR-001 | Tool Transfer and Persistence | T1105, T1053.005, T1218.003 | Complete |
-| IR-002 | Reconnaissance and Host Discovery | T1046, T1082, T1033, T1016 | Complete |
-| IR-003 | Encoded PowerShell Execution and C2 Beaconing | T1059.001, T1027, T1071.001, T1105 | Complete |
-| IR-004 | Defense Evasion and Persistence | T1218.005, T1547.001, T1562.001, T1036 | Complete |
-| IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Complete |
+| Report | Title | MITRE TTPs | Platform | Status |
+|---|---|---|---|---|
+| IR-001 | Tool Transfer and Persistence | T1105, T1053.005, T1218.003 | Kibana | Complete |
+| IR-002 | Reconnaissance and Host Discovery | T1046, T1082, T1033, T1016 | Kibana | Complete |
+| IR-003 | Encoded PowerShell Execution and C2 Beaconing | T1059.001, T1027, T1071.001, T1105 | Kibana | Complete |
+| IR-004 | Defense Evasion and Persistence | T1218.005, T1547.001, T1562.001, T1036 | Kibana | Complete |
+| IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Kibana | Complete |
+| IR-006 | PowerShell-Originated Payload Retrieval and Persistence | T1059.001, T1105, T1053.005, T1082, T1016, T1049, T1033 | Argus | Complete |
 
-IR-005 is the portfolio centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert by pivoting on timestamp, chaining ProcessGuid relationships, and validating activity independently across both EDR and NDR datasets.
+IR-005 is the Kibana-era centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert by pivoting on timestamp, chaining ProcessGuid relationships, and validating activity independently across both EDR and NDR datasets.
+
+IR-006 is the Argus-era centrepiece: a controlled simulation investigated entirely inside the Argus console. CASE-011 (26 behaviors, risk 5,109) was triaged through process tree analysis, cross-layer corroboration (6 Suricata events independently confirming EDR-observed PowerShell HTTP activity), entity pivot to the hunt workbench, and analyst action logging. It is the first investigation to demonstrate the full Argus workflow end to end against live telemetry.
 
 ---
 
@@ -113,6 +117,7 @@ The investigation begins with a network scan alert and expands through endpoint 
 - Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout, all techniques LOLBin-based, no malware required
 - Reconstructed the full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer correlation
 - Confirmed that endpoint and network telemetry independently corroborate the same C2 channel: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records, matching source IP, destination IP, and timestamp window, collected by two separate sensors with no shared data path
+- Conducted a complete Argus investigation in IR-006 against CASE-011: process tree analysis, cross-layer corroboration of 3x PowerShell HTTP retrievals across independent EDR and NDR pipelines, entity pivot to hunt workbench, and analyst action logging — full workflow validated against live telemetry
 
 ### Argus: SOC Investigation Console
 - Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
@@ -286,6 +291,11 @@ soc-homelab/
     +-- IR-003/
     +-- IR-004/
     +-- IR-005/
+    +-- IR-006/
+        +-- IR-006-argus-detection-powershell-persistence.md
+        +-- IR-006-notes.txt
+        +-- screenshots/
+        +-- raw-events/
 ```
 
 ---

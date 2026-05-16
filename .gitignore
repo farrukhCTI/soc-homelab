@@ -20,3 +20,5 @@ triage-service/
 __pycache__/
 *.pyc
 argus/engine/
+
+argus/start_argus.ps1

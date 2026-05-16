@@ -3,12 +3,15 @@ import { useQuery } from "@tanstack/react-query"
 import { fetchActions } from "../api"
 import { useArgus } from "../ArgusContext"
 
-type FilterType = "ALL" | "ESCALATE" | "BLOCK_IP" | "NOTE"
+type FilterType = "ALL" | "ESCALATE" | "BLOCK_IP" | "NOTE" | "RESOLVED" | "CONFIRMED_MALICIOUS" | "FALSE_POSITIVE"
 
 const BADGE: Record<string, { color: string; bg: string; border: string }> = {
-  ESCALATE: { color: "var(--red)",  bg: "rgba(229,83,75,0.10)",  border: "rgba(229,83,75,0.30)" },
-  BLOCK_IP: { color: "var(--amb)",  bg: "rgba(201,138,58,0.10)", border: "rgba(201,138,58,0.28)" },
-  NOTE:     { color: "var(--grn)",  bg: "rgba(63,160,106,0.10)", border: "rgba(63,160,106,0.28)" },
+  ESCALATE:           { color: "var(--red)",  bg: "rgba(229,83,75,0.10)",   border: "rgba(229,83,75,0.30)" },
+  BLOCK_IP:           { color: "var(--amb)",  bg: "rgba(201,138,58,0.10)",  border: "rgba(201,138,58,0.28)" },
+  NOTE:               { color: "var(--grn)",  bg: "rgba(63,160,106,0.10)",  border: "rgba(63,160,106,0.28)" },
+  RESOLVED:           { color: "var(--teal)", bg: "rgba(61,184,144,0.10)",  border: "rgba(61,184,144,0.28)" },
+  CONFIRMED_MALICIOUS:{ color: "var(--red)",  bg: "rgba(229,83,75,0.10)",   border: "rgba(229,83,75,0.30)" },
+  FALSE_POSITIVE:     { color: "var(--grn)",  bg: "rgba(63,160,106,0.10)",  border: "rgba(63,160,106,0.28)" },
 }
 
 function fmtTs(iso: string) {
@@ -34,10 +37,13 @@ export default function ActionsLog({ onNavigateToInvestigation }: Props) {
   const filtered = filter === "ALL" ? actions : actions.filter(a => a.action === filter)
 
   const filters: { key: FilterType; label: string }[] = [
-    { key: "ALL",      label: "All" },
-    { key: "ESCALATE", label: "Escalate" },
-    { key: "BLOCK_IP", label: "Block IP" },
-    { key: "NOTE",     label: "Note" },
+    { key: "ALL",                label: "All" },
+    { key: "ESCALATE",           label: "Escalate" },
+    { key: "BLOCK_IP",           label: "Block IP" },
+    { key: "NOTE",               label: "Note" },
+    { key: "RESOLVED",           label: "Resolved" },
+    { key: "CONFIRMED_MALICIOUS",label: "Confirmed" },
+    { key: "FALSE_POSITIVE",     label: "False Pos" },
   ]
 
   function openBehavior(behaviorId: string) {

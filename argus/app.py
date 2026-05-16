@@ -7,6 +7,7 @@ Routes:
 - GET /api/cases/{case_id}/summary      - generate/return cached Claude case summary (4.5)
 - GET /api/behaviors/{behavior_id}      - single behavior + parent case context
 - GET /api/behaviors/{behavior_id}/process_tree  - adjacency JSON from raw Sysmon EID 1
+- GET /api/behaviors/{behavior_id}/network_context - CL-1: Suricata cross-layer correlation
 - PATCH /api/behaviors/{behavior_id}/status      - update behavior status
 - GET /api/actions                      - analyst action audit trail
 - POST /api/actions                     - write analyst action
@@ -318,6 +319,211 @@ async def get_process_tree(behavior_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tree build failed: {str(e)}")
+
+
+# ---------------------------------------------------------------------------
+# GET /api/behaviors/{behavior_id}/network_context
+# CL-1 — Cross-layer correlation: Sysmon behavior + Suricata NDR
+#
+# Field facts (confirmed 2026-05-16 against filebeat-7.14.0-2026.05.16):
+#   - Suricata EVE is ingested raw (module not loaded), fields are FLAT not nested
+#   - IP fields:  src_ip.keyword, dest_ip.keyword, flow.src_ip.keyword, flow.dest_ip.keyword
+#   - Time field: timestamp (Suricata event time, mapped as date) — NOT @timestamp (ingest time)
+#   - Event types present: alert, http, fileinfo
+#   - Alert fields: alert.signature, alert.signature_id, alert.severity, alert.category
+#   - Victim IP filter: 10.0.20.10 (DESKTOP-MM1REM9) via src/dest, not host.name
+#   - Window: +-15min around behavior timestamp (consistent with process_tree_builder.py)
+#   - Index: filebeat-* (old indices have broken text mappings, query still works on new)
+#   - Empty result is valid data: return has_network_data=False, never raise error
+# ---------------------------------------------------------------------------
+@app.get("/api/behaviors/{behavior_id}/network_context")
+async def get_network_context(behavior_id: str):
+    """
+    Cross-layer correlation for a behavior.
+
+    Fetches Suricata EVE events in a +-15min window around the behavior timestamp,
+    filtered to victim IP (10.0.20.10) via src_ip, dest_ip, flow.src_ip, flow.dest_ip.
+
+    Returns:
+      has_network_data: bool
+      network_events: list of http/fileinfo events (url, dest_ip, dest_port, timestamp)
+      alerts:  list of Suricata alert events (signature, signature_id, severity, src/dest)
+      summary: returned, total_hits, alert_count, network_event_count, unique_ips
+    """
+    from datetime import timedelta
+
+    # Step 1: fetch behavior timestamp + host
+    try:
+        resp = es.search(
+            index="argus-behaviors",
+            body={
+                "size": 1,
+                "query": {"term": {"behavior_id.keyword": behavior_id}},
+                "_source": ["timestamp", "host"]
+            }
+        )
+        hits = resp["hits"]["hits"]
+        if not hits:
+            raise HTTPException(status_code=404, detail=f"Behavior {behavior_id} not found")
+
+        src = hits[0]["_source"]
+        behavior_ts = src.get("timestamp")
+        if not behavior_ts:
+            raise HTTPException(status_code=422, detail="Behavior missing timestamp")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    # Step 2: build +-15min window around behavior timestamp
+    try:
+        # Parse ISO timestamp — handle both Z and +00:00 suffixes
+        ts_clean = behavior_ts.replace("Z", "+00:00")
+        center   = datetime.fromisoformat(ts_clean)
+        start_ts = (center - timedelta(minutes=15)).isoformat()
+        end_ts   = (center + timedelta(minutes=15)).isoformat()
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Could not parse behavior timestamp: {str(e)}")
+
+    # Step 3: query Suricata data from filebeat-*
+    # Use Suricata `timestamp` field (real event time), NOT `@timestamp` (Filebeat ingest time)
+    # Both top-level and flow.* IPs required — some events only have context inside flow
+    VICTIM_IP = "10.0.20.10"
+
+    try:
+        ndr_resp = es.search(
+            index="filebeat-*",
+            body={
+                "size": 200,
+                "track_total_hits": True,
+                "query": {
+                    "bool": {
+                        "should": [
+                            {"term": {"src_ip.keyword":       VICTIM_IP}},
+                            {"term": {"dest_ip.keyword":      VICTIM_IP}},
+                            {"term": {"flow.src_ip.keyword":  VICTIM_IP}},
+                            {"term": {"flow.dest_ip.keyword": VICTIM_IP}}
+                        ],
+                        "minimum_should_match": 1,
+                        "filter": [
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        "gte": start_ts,
+                                        "lte": end_ts
+                                    }
+                                }
+                            },
+                            {
+                                "terms": {
+                                    "event_type.keyword": ["alert", "http", "fileinfo"]
+                                }
+                            }
+                        ]
+                    }
+                },
+                "sort": [{"timestamp": {"order": "asc"}}],
+                "_source": [
+                    "timestamp", "event_type",
+                    "src_ip", "dest_ip", "src_port", "dest_port",
+                    "proto", "flow",
+                    "alert.signature", "alert.signature_id",
+                    "alert.severity", "alert.category", "alert.action",
+                    "http.hostname", "http.url", "http.method",
+                    "http.status", "http.http_user_agent"
+                ]
+            }
+        )
+    except Exception as e:
+        # Non-fatal: old filebeat indices may error on some fields
+        # Return empty rather than 500 so the UI degrades gracefully
+        return {
+            "ok":               True,
+            "has_network_data": False,
+            "network_events":   [],
+            "alerts":           [],
+            "summary": {
+                "returned":             0,
+                "total_hits":           0,
+                "alert_count":          0,
+                "network_event_count":  0,
+                "unique_ips":           []
+            },
+            "window": {"start": start_ts, "end": end_ts},
+            "error":  str(e)
+        }
+
+    # Step 4: separate and normalise results by event_type
+    raw_hits = ndr_resp["hits"]["hits"]
+
+    alerts         = []
+    network_events = []
+    unique_ips     = set()
+
+    for h in raw_hits:
+        s  = h["_source"]
+        et = s.get("event_type", "")
+
+        # Collect all non-victim IPs seen in this event
+        for ip_field in [s.get("dest_ip"), s.get("src_ip")]:
+            if ip_field and ip_field != VICTIM_IP:
+                unique_ips.add(ip_field)
+
+        if et == "alert":
+            alerts.append({
+                "timestamp":    s.get("timestamp"),
+                "event_type":   "alert",
+                "src_ip":       s.get("src_ip"),
+                "dest_ip":      s.get("dest_ip"),
+                "src_port":     s.get("src_port"),
+                "dest_port":    s.get("dest_port"),
+                "proto":        s.get("proto"),
+                "signature":    s.get("alert", {}).get("signature"),
+                "signature_id": s.get("alert", {}).get("signature_id"),
+                "severity":     s.get("alert", {}).get("severity"),
+                "category":     s.get("alert", {}).get("category"),
+                "action":       s.get("alert", {}).get("action"),
+            })
+
+        elif et in ("http", "fileinfo"):
+            http_obj = s.get("http", {})
+            if not isinstance(http_obj, dict):
+                http_obj = {}
+            network_events.append({
+                "timestamp":  s.get("timestamp"),
+                "event_type": et,
+                "src_ip":     s.get("src_ip") or s.get("flow", {}).get("src_ip"),
+                "dest_ip":    s.get("dest_ip") or s.get("flow", {}).get("dest_ip"),
+                "src_port":   s.get("src_port"),
+                "dest_port":  s.get("dest_port"),
+                "proto":      s.get("proto"),
+                "url":        http_obj.get("url"),
+                "hostname":   http_obj.get("hostname"),
+                "method":     http_obj.get("method"),
+                "status":     http_obj.get("status"),
+                "user_agent": http_obj.get("http_user_agent"),
+            })
+
+    has_data = len(alerts) > 0 or len(network_events) > 0
+
+    return {
+        "ok":               True,
+        "has_network_data": has_data,
+        "network_events":   network_events,
+        "alerts":           alerts,
+        "summary": {
+            "returned":            len(raw_hits),
+            "total_hits":          ndr_resp["hits"]["total"]["value"],
+            "alert_count":         len(alerts),
+            "network_event_count": len(network_events),
+            "unique_ips":          list(unique_ips)
+        },
+        "window": {
+            "start": start_ts,
+            "end":   end_ts
+        }
+    }
 
 
 # ---------------------------------------------------------------------------

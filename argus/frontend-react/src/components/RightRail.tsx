@@ -70,6 +70,7 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
 
   return (
     <div>
+      {/* ── Case actions ── */}
       <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 8 }}>Case actions</div>
 
       {btn("Escalate case", "escalate", "var(--red)", "var(--red2)", "var(--red3)")}
@@ -109,12 +110,39 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
         </div>
       )}
 
-      <button style={{
-        display: "flex", alignItems: "center", padding: "7px 8px", borderRadius: 3,
-        cursor: "not-allowed", border: "1px solid var(--ln2)", background: "transparent",
-        color: "var(--t3)", fontSize: 10, width: "100%", marginBottom: 3, fontFamily: "inherit",
-        opacity: 0.5,
-      }}>Mark resolved <span style={{ fontSize: 9, marginLeft: "auto", color: "var(--t4)" }}>soon</span></button>
+      {/* ── Closure states ── */}
+      <div style={{ height: 1, background: "var(--ln2)", margin: "10px 0 8px" }} />
+      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 8 }}>Close case</div>
+
+      {btn("Mark resolved", "resolved", "var(--teal)", "var(--teal2)", "var(--teal3)")}
+      {open === "resolved" && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--teal3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
+          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+            Mark <strong style={{ color: "var(--teal)" }}>{selectedCase.case_id}</strong> as resolved. No further action required.
+          </div>
+          {submitBtn("Confirm resolved", "RESOLVED", "var(--teal)")}
+        </div>
+      )}
+
+      {btn("Confirmed malicious", "confirmed", "var(--red)", "var(--red2)", "var(--red3)")}
+      {open === "confirmed" && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--red3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
+          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+            Confirm <strong style={{ color: "var(--red)" }}>{selectedCase.case_id}</strong> as a true positive malicious incident.
+          </div>
+          {submitBtn("Confirm malicious", "CONFIRMED_MALICIOUS", "var(--red)")}
+        </div>
+      )}
+
+      {btn("False positive", "fp", "var(--grn)", "var(--grn2)", "var(--grn3)")}
+      {open === "fp" && (
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--grn3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
+          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+            Dismiss <strong style={{ color: "var(--grn)" }}>{selectedCase.case_id}</strong> as a false positive. Detection rules may need tuning.
+          </div>
+          {submitBtn("Confirm false positive", "FALSE_POSITIVE", "var(--grn)")}
+        </div>
+      )}
 
       {status === "ok" && (
         <div style={{ fontSize: 9, color: "var(--grn)", fontFamily: "var(--mono)", marginTop: 6, padding: "4px 8px", background: "var(--grn2)", borderRadius: 3 }}>

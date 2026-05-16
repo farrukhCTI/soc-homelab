@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useArgus } from "../ArgusContext"
 import { fetchCaseBehaviors, fetchProcessTree } from "../api"
 import ProcessTree from "../components/ProcessTree"
+import CrossLayerTab from "./CrossLayerTab"
 
 const TACTIC_COLOR: Record<string, string> = {
   exec: "#4a8fc4",
@@ -17,7 +18,7 @@ const TL_COLORS: Record<string, string> = {
   pers: "#c47a8a",
 }
 
-const TABS = ["Process tree", "Timeline", "Detection logic", "Raw events"]
+const TABS = ["Process tree", "Timeline", "Detection logic", "Raw events", "Cross-layer"]
 
 export default function Investigation() {
   const { selectedCase, selectedBehavior } = useArgus()
@@ -30,8 +31,11 @@ export default function Investigation() {
     staleTime: 30000,
   })
 
-  const firstBehavior = behaviorsQuery.data?.[0]
-  const targetBehavior = selectedBehavior?.behavior_id ? selectedBehavior : firstBehavior
+  const behaviors_desc = behaviorsQuery.data
+    ? [...behaviorsQuery.data].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    : []
+  const latestBehavior = behaviors_desc[0]
+  const targetBehavior = selectedBehavior?.behavior_id ? selectedBehavior : latestBehavior
 
   const treeQuery = useQuery({
     queryKey: ["tree", targetBehavior?.behavior_id],
@@ -62,6 +66,16 @@ export default function Investigation() {
     label: new Date(b.timestamp).toISOString().slice(11, 16),
     count: b.detection_score || 10,
   }))
+
+  // Build behavior context object for CrossLayerTab triggering strip
+  const behaviorContext = targetBehavior ? {
+    behavior_id: targetBehavior.behavior_id,
+    description:  targetBehavior.description || "",
+    image:        targetBehavior.image,
+    command_line: targetBehavior.command_line,
+    timestamp:    targetBehavior.timestamp || "",
+    tactic:       targetBehavior.tactic,
+  } : undefined
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "var(--bg0)", overflow: "hidden" }}>
@@ -115,10 +129,10 @@ export default function Investigation() {
             onClick={() => setActiveTab(i)}
             style={{
               fontSize: 10,
-              color: activeTab === i ? "var(--t1)" : "var(--t3)",
+              color: activeTab === i ? "var(--t1)" : i === 4 && activeTab !== 4 ? "#7b6dd488" : "var(--t3)",
               padding: "0 10px", height: 30, display: "flex", alignItems: "center",
               cursor: "pointer",
-              borderBottom: `1.5px solid ${activeTab === i ? "var(--teal)" : "transparent"}`,
+              borderBottom: `1.5px solid ${activeTab === i ? (i === 4 ? "#7b6dd4" : "var(--teal)") : "transparent"}`,
               letterSpacing: "0.02em",
               transition: "color 0.12s",
             }}
@@ -209,7 +223,16 @@ export default function Investigation() {
         </div>
       )}
 
-      {/* Timeline strip — only show on process tree tab */}
+      {/* Cross-layer tab — CL-2 */}
+      {activeTab === 4 && (
+        <CrossLayerTab
+          behaviorId={targetBehavior?.behavior_id || ""}
+          behaviorTs={targetBehavior?.timestamp || ""}
+          behavior={behaviorContext}
+        />
+      )}
+
+      {/* Timeline strip — only on process tree tab */}
       {activeTab === 0 && (
         <div style={{
           height: 72, background: "var(--bg1)", borderTop: "1px solid var(--ln)",

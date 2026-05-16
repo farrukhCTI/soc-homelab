@@ -178,6 +178,12 @@ interface BehaviorRef {
   host?: string
 }
 
+const LEGEND_ITEMS = [
+  { color: "#e5534b",                label: "Execution / Shell" },
+  { color: "#7b6dd4",                label: "Discovery" },
+  { color: "rgba(255,255,255,0.28)", label: "Other process" },
+]
+
 export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: ApiTreeData; behaviors?: BehaviorRef[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -406,9 +412,29 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
   return (
     <div ref={wrapRef} style={{ flex: 1, position: "relative", overflow: "hidden", cursor: "crosshair" }}>
       <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
+
+      {/* Node tier legend */}
+      <div style={{ position: "absolute", bottom: 28, left: 14, display: "flex", gap: 12, pointerEvents: "none" }}>
+        {LEGEND_ITEMS.map(({ color, label }) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: 1,
+              background: color, flexShrink: 0,
+            }} />
+            <span style={{
+              fontSize: 9, fontFamily: "var(--mono)",
+              color: "var(--t3)", letterSpacing: "0.04em",
+            }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Hint text */}
       <div style={{ position: "absolute", bottom: 8, left: 14, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", pointerEvents: "none" }}>
         hover to trace · click to pin · scroll to zoom · drag to pan
       </div>
+
+      {/* Zoom controls */}
       <div style={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 3 }}>
         {(["+", "-", "o"] as string[]).map((lbl, i) => {
           const factors = [1.2, 0.83, 0]
