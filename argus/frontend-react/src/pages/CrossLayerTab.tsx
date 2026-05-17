@@ -1,14 +1,8 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useArgus } from "../ArgusContext"
-
-// ─── API ─────────────────────────────────────────────────────────────────────
-
-async function fetchNetworkContext(behaviorId: string) {
-  const r = await fetch(`/api/behaviors/${behaviorId}/network_context`)
-  if (!r.ok) throw new Error("network_context fetch failed")
-  return r.json()
-}
+// FIX-05: fetchNetworkContext imported from api.ts — no longer duplicated here.
+import { fetchNetworkContext } from "../api"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,7 +77,21 @@ function deltaSeconds(a: string, b: string): number {
   return (new Date(b).getTime() - new Date(a).getTime()) / 1000
 }
 
-const VICTIM_IP = "10.0.20.10"
+// FIX-15: VICTIM_IP was hardcoded as "10.0.20.10" — wrong in any other environment.
+// Direction is now derived dynamically: the victim is the src of outbound (GET) traffic.
+// unique_ips from the API already excludes the victim, so remote IPs are always correct.
+// For display purposes, use the src_ip of the first outbound event, or fall back to
+// the first non-remote IP seen. If neither is available, direction label is omitted.
+function getVictimIp(events: NetworkEvent[]): string | null {
+  // Outbound HTTP events have the victim as src
+  const outbound = events.find(e => e.event_type === "http" && e.src_ip)
+  return outbound?.src_ip ?? null
+}
+
+function isOutbound(e: NetworkEvent, victimIp: string | null): boolean {
+  if (!victimIp) return false
+  return e.src_ip === victimIp
+}
 
 const COLOR = {
   teal:    "var(--teal)",
@@ -106,9 +114,7 @@ function severityLabel(sev?: number): string {
   return "LOW"
 }
 
-function isOutbound(e: NetworkEvent): boolean {
-  return e.src_ip === VICTIM_IP
-}
+
 
 // ─── Pivot entity — clickable investigation affordance ────────────────────────
 // Not a hyperlink. An investigation primitive.
@@ -208,8 +214,8 @@ function buildChain(
     const firstTs = httpEvents[0].timestamp
     const lastTs = httpEvents[httpEvents.length - 1].timestamp
     const spanMs = new Date(lastTs).getTime() - new Date(firstTs).getTime()
-    const outbound = httpEvents.find(e => isOutbound(e))
-    const remoteIp = outbound?.dest_ip || networkEvents.find(e => !isOutbound(e))?.src_ip || "unknown"
+    const outbound = httpEvents.find(e => isOutbound(e, getVictimIp(networkEvents)))
+    const remoteIp = outbound?.dest_ip || networkEvents.find(e => !isOutbound(e, getVictimIp(networkEvents)))?.src_ip || "unknown"
     const remotePort = outbound?.dest_port || "?"
     const ua = httpEvents[0].user_agent
     const isPowerShell = ua?.toLowerCase().includes("powershell")
@@ -263,7 +269,7 @@ function buildAssessment(
   const httpEvents = networkEvents.filter(e => e.event_type === "http")
   const uas = [...new Set(networkEvents.map(e => e.user_agent).filter(Boolean))]
   const isPowerShell = uas.some(ua => ua?.toLowerCase().includes("powershell"))
-  const outbound = networkEvents.find(e => isOutbound(e))
+  const outbound = networkEvents.find(e => isOutbound(e, getVictimIp(networkEvents)))
   const remotePort = outbound?.dest_port
   const suspiciousPort = remotePort === 8080 || remotePort === 4444 || remotePort === 1337
 
@@ -322,7 +328,8 @@ function CorroborationBanner({ data }: { data: NetworkContextResponse }) {
   const hasAlerts = data.alerts.length > 0
   const accentColor = hasAlerts ? COLOR.alert : COLOR.teal
   const bgTint = hasAlerts ? "rgba(180,40,40,0.10)" : "rgba(32,180,110,0.10)"
-  const outbound = data.network_events.find(e => isOutbound(e))
+  const victimIp = getVictimIp(data.network_events)
+  const outbound = data.network_events.find(e => isOutbound(e, victimIp))
   const remoteIp = data.summary.unique_ips[0] || "unknown"
   const remotePort = outbound?.dest_port ?? "?"
 
@@ -347,8 +354,11 @@ function CorroborationBanner({ data }: { data: NetworkContextResponse }) {
           <span style={{ color: "var(--t1)", fontWeight: 600 }}>{data.summary.network_event_count}</span>
           {" network events · "}
           <span style={{ color: hasAlerts ? COLOR.alert : "var(--t2)" }}>{data.summary.alert_count}</span>
-          {" Suricata alerts · victim "}
-          <span style={{ color: "var(--t1)" }}>{VICTIM_IP}</span>
+          {victimIp && (
+            <>{" Suricata alerts · victim "}
+            <span style={{ color: "var(--t1)" }}>{victimIp}</span></>
+          )}
+          {!victimIp && <>{" Suricata alerts"}</>}
           <span style={{ color: "var(--t4)", margin: "0 6px" }}>→</span>
           <PivotEntity
             value={`${remoteIp}:${remotePort}`}
@@ -597,8 +607,8 @@ function AggregatedEventGroup({
   const urls = [...new Set(events.map(e => e.url).filter(Boolean))]
   const ua = events[0]?.user_agent
   const isPowerShell = ua?.toLowerCase().includes("powershell")
-  const outbound = events.find(e => isOutbound(e))
-  const remoteIp = outbound?.dest_ip || events.find(e => !isOutbound(e))?.src_ip || "?"
+  const outbound = events.find(e => isOutbound(e, getVictimIp(events)))
+  const remoteIp = outbound?.dest_ip || events.find(e => !isOutbound(e, getVictimIp(events)))?.src_ip || "?"
   const remotePort = outbound?.dest_port || "?"
   const firstTs = events[0]?.timestamp
   const lastTs = events[events.length - 1]?.timestamp
@@ -750,7 +760,7 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
   summary: NetworkContextResponse["summary"]
   behavior?: BehaviorContext
 }) {
-  const outbound = networkEvents.find(e => isOutbound(e))
+  const outbound = networkEvents.find(e => isOutbound(e, getVictimIp(networkEvents)))
   const remoteIps = summary.unique_ips
   const remotePort = outbound?.dest_port
   const proto = outbound?.proto
@@ -926,7 +936,7 @@ function EmptyState({ window: win }: { window: { start: string; end: string } })
         {[
           { label: "Sources checked", value: "Suricata EVE · filebeat-* index" },
           { label: "Query window",    value: `${fmtTs(win.start)} → ${fmtTs(win.end)}` },
-          { label: "Filter",          value: "src_ip OR dest_ip = 10.0.20.10" },
+          { label: "Filter",          value: "src_ip OR dest_ip = victim host" },
         ].map(({ label, value }) => (
           <div key={label} style={{ display: "flex", gap: 12, marginBottom: 7 }}>
             <span style={{ fontSize: 9, color: "var(--t4)", flexShrink: 0, width: 110 }}>{label}</span>

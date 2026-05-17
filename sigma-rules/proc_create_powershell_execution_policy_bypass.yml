@@ -1,0 +1,32 @@
+title: PowerShell Execution Policy Bypass
+id: a1b2c3d4-0001-4e5f-a001-argus00000001
+status: test
+description: Detects PowerShell launched with -ExecutionPolicy Bypass flag, commonly used by attackers to run unsigned scripts without restriction. Observed in Argus stress test 2026-05-16 across CASE-001 and CASE-004.
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.execution
+    - attack.t1059.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains:
+            - '-ExecutionPolicy Bypass'
+            - '-ep bypass'
+            - '-ExecutionPolicy bypass'
+    condition: selection
+falsepositives:
+    - Software installers
+    - Legitimate admin scripts with documented justification
+    - SCCM/MDM deployment scripts
+level: medium
+fields:
+    - CommandLine
+    - ParentImage
+    - User

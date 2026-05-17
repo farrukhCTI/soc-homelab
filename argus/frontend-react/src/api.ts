@@ -43,6 +43,15 @@ export const fetchBriefing = (behaviorId: string) =>
 export const generateBriefing = (behaviorId: string) =>
   post<{ ok: true; summary: string; next_steps: string[]; escalate: boolean }>(`/brief`, { behavior_id: behaviorId })
 
+// FIX-05: Centralised network context fetch — single source of truth.
+// Previously duplicated in RightRail.tsx and CrossLayerTab.tsx.
+// Throws on non-ok response so callers can handle errors consistently.
+export async function fetchNetworkContext(behaviorId: string) {
+  const res = await fetch(`/api/behaviors/${behaviorId}/network_context`)
+  if (!res.ok) throw new Error(`network_context fetch failed: ${res.status}`)
+  return res.json()
+}
+
 // Actions
 export const fetchActions = () =>
   get<{ ok: true; actions: Action[]; total: number }>('/actions').then(d => d)

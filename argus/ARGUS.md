@@ -18,7 +18,7 @@ Three Python daemons run continuously in the background:
 
 **behavior_detector.py** polls the EDR index every 60 seconds. It runs 44 detection profiles against raw Sysmon EID 1, 10, 11, and 13 events. Each profile matches on process image, command-line context, and event ID, then scores the hit by tactic weight and confidence tier. Results are written to the `argus-behaviors` index with deterministic IDs so the pipeline is fully idempotent across repeated runs.
 
-**case_builder.py** groups behaviors into cases using a 10-minute sliding window. It requires a minimum of 5 behaviors, at least 2 distinct tactics, and a density check (3+ events within any 2-minute sub-window) before it creates a case. This prevents noise from generating false cases.
+**case_builder.py** groups behaviors into cases using a 10-minute sliding window. It requires a minimum of 3 behaviors, at least 1 distinct tactic, and a density check (3+ events within any 2-minute sub-window) before it creates a case. This prevents noise from generating false cases.
 
 **app.py** is a FastAPI backend serving 15 API routes. The React frontend proxies all requests through Vite to this backend.
 
@@ -30,7 +30,7 @@ Three Python daemons run continuously in the background:
 
 ![Case Queue](screenshots/case_queue_updated.png)
 
-The left rail is the case queue. Every case shows the case ID, behavior count, time window, severity badge, risk score, and a sparkline of behavior volume over time. The red dot on the top case is a live pulse indicator showing the most recently active case.
+The left rail is the case queue. Every case shows the case ID, behavior count, time window, severity badge, risk score, and tactic tags showing the tactics observed in that case.
 
 Cases are sorted by risk score descending. The HIGH/MED/all filter chips at the top narrow the list instantly. At a glance an analyst can see which cases are worth opening and which can wait.
 

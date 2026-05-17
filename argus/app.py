@@ -95,7 +95,9 @@ async def get_case_behaviors(case_id: str):
                 "_source": [
                     "behavior_id", "timestamp", "host", "image",
                     "command_line", "tactic", "mitre_technique",
-                    "description", "severity", "status"
+                    "description", "severity", "status",
+                    "confidence", "behavior_class", "fire_reasons",
+                    "pid", "user", "profile", "priority_score"
                 ]
             }
         )
@@ -600,9 +602,11 @@ async def get_actions(limit: int = 200):
 @app.post("/api/actions")
 async def create_action(payload: dict):
     try:
-        allowed = {"ESCALATE", "BLOCK_IP", "NOTE"}
+        # Closure actions are log-only — they do not mutate case status in ES.
+        # Acceptable for current scope. Operational closure state mutation is future work.
+        allowed = {"ESCALATE", "BLOCK_IP", "NOTE", "RESOLVED", "CONFIRMED_MALICIOUS", "FALSE_POSITIVE"}
         if payload.get("action") not in allowed:
-            return {"ok": False, "error": f"Invalid action. Must be one of: {', '.join(allowed)}"}
+            return {"ok": False, "error": f"Invalid action. Must be one of: {', '.join(sorted(allowed))}"}
 
         doc = {
             "behavior_id": payload.get("behavior_id"),

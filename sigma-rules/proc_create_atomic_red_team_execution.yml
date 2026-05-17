@@ -1,0 +1,30 @@
+title: Atomic Red Team Execution Detected
+id: a1b2c3d4-0011-4e5f-a011-argus00000011
+status: test
+description: Detects execution of Atomic Red Team tests via Invoke-AtomicTest cmdlet. Observed directly in CASE-004 command line telemetry. This rule is primarily useful for homelab validation — confirming that attacks are generating telemetry — and for detecting unauthorized red team tool usage in production environments.
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://github.com/redcanaryco/atomic-red-team
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - detection.validation
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\powershell.exe'
+        CommandLine|contains: 'Invoke-AtomicTest'
+    condition: selection
+falsepositives:
+    - Authorized red team and purple team exercises
+    - Security testing in lab environments
+level: high
+fields:
+    - CommandLine
+    - ParentImage
+    - User

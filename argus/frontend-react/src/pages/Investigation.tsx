@@ -18,7 +18,10 @@ const TL_COLORS: Record<string, string> = {
   pers: "#c47a8a",
 }
 
-const TABS = ["Process tree", "Timeline", "Detection logic", "Raw events", "Cross-layer"]
+// FIX-08: Cross-layer moved to tab 1 (was tab 4).
+// It is the strongest screen and was buried last. Most viewers never reached it.
+// New order: Process tree | Cross-layer | Timeline | Detection logic | Raw events
+const TABS = ["Process tree", "Cross-layer", "Timeline", "Detection logic", "Raw events"]
 
 export default function Investigation() {
   const { selectedCase, selectedBehavior } = useArgus()
@@ -60,22 +63,47 @@ export default function Investigation() {
   const tactics = [...new Set(selectedCase.tactics_seen || [])]
   const behaviors = behaviorsQuery.data || []
 
-  const tlEvents = behaviors.slice(0, 16).map((b, i) => ({
-    pct: Math.round((i / Math.max(behaviors.length - 1, 1)) * 92) + 3,
+  // FIX-11: Timeline dots positioned by actual timestamp delta, not array index.
+  // Previously: pct = (i / behaviors.length) * 92 + 3 — evenly spaced regardless of time.
+  // Now: pct derived from (ts - minTs) / timeRange — burst activity clusters correctly.
+  const tlBehaviors = behaviors.slice(0, 16)
+  const times = tlBehaviors.map(b => new Date(b.timestamp).getTime())
+  const minT = times.length > 0 ? Math.min(...times) : 0
+  const maxT = times.length > 0 ? Math.max(...times) : 1
+  const timeRange = maxT - minT || 1
+
+  const tlEvents = tlBehaviors.map((b) => ({
+    pct: Math.round(((new Date(b.timestamp).getTime() - minT) / timeRange) * 92) + 3,
     type: (b.tactic || "exec").toLowerCase().slice(0, 4),
     label: new Date(b.timestamp).toISOString().slice(11, 16),
     count: b.detection_score || 10,
   }))
 
-  // Build behavior context object for CrossLayerTab triggering strip
+  // Build behavior context object for CrossLayerTab
   const behaviorContext = targetBehavior ? {
     behavior_id: targetBehavior.behavior_id,
     description:  targetBehavior.description || "",
-    image:        targetBehavior.image,
+    image:        (targetBehavior as any).image,
     command_line: targetBehavior.command_line,
     timestamp:    targetBehavior.timestamp || "",
     tactic:       targetBehavior.tactic,
   } : undefined
+
+  // Detection logic helpers
+  const CONF_COLOR: Record<string, string> = {
+    high: "var(--red)",
+    medium: "#c98a3a",
+    low: "var(--t3)",
+  }
+
+  const CLASS_COLOR: Record<string, string> = {
+    EXECUTION: "#4a8fc4",
+    PERSISTENCE: "#c47a8a",
+    DISCOVERY: "#7b6dd4",
+    DEFENSE_EVASION: "#c98a3a",
+    COLLECTION: "#5a9e6f",
+    COMMAND_AND_CONTROL: "#e07b54",
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "var(--bg0)", overflow: "hidden" }}>
@@ -119,6 +147,7 @@ export default function Investigation() {
       </div>
 
       {/* Panel tabs */}
+      {/* FIX-08: Tab order changed. Cross-layer is now i=1, purple tint updated accordingly. */}
       <div style={{
         height: 30, background: "var(--bg0)", borderBottom: "1px solid var(--ln)",
         display: "flex", alignItems: "flex-end", padding: "0 14px", flexShrink: 0,
@@ -129,10 +158,10 @@ export default function Investigation() {
             onClick={() => setActiveTab(i)}
             style={{
               fontSize: 10,
-              color: activeTab === i ? "var(--t1)" : i === 4 && activeTab !== 4 ? "#7b6dd488" : "var(--t3)",
+              color: activeTab === i ? "var(--t1)" : i === 1 && activeTab !== 1 ? "#7b6dd488" : "var(--t3)",
               padding: "0 10px", height: 30, display: "flex", alignItems: "center",
               cursor: "pointer",
-              borderBottom: `1.5px solid ${activeTab === i ? (i === 4 ? "#7b6dd4" : "var(--teal)") : "transparent"}`,
+              borderBottom: `1.5px solid ${activeTab === i ? (i === 1 ? "#7b6dd4" : "var(--teal)") : "transparent"}`,
               letterSpacing: "0.02em",
               transition: "color 0.12s",
             }}
@@ -141,14 +170,26 @@ export default function Investigation() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 0 && <ProcessTree key={treeData ? "real" : "demo"} treeData={treeData} behaviors={behaviors} />}
 
+      {/* Tab 0: Process tree */}
+      {activeTab === 0 && <ProcessTree key={treeData ? "real" : "empty"} treeData={treeData} behaviors={behaviors} />}
+
+      {/* Tab 1: Cross-layer — FIX-08: was tab 4, now tab 1 */}
       {activeTab === 1 && (
+        <CrossLayerTab
+          behaviorId={targetBehavior?.behavior_id || ""}
+          behaviorTs={targetBehavior?.timestamp || ""}
+          behavior={behaviorContext}
+        />
+      )}
+
+      {/* Tab 2: Timeline — FIX-08: was tab 1, now tab 2 */}
+      {activeTab === 2 && (
         <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
           <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
             behavior timeline · {behaviors.length} events
           </div>
-          {behaviors.slice(0, 30).map((b, i) => {
+          {behaviors.slice(0, 30).map((b) => {
             const key = (b.tactic || "exec").toLowerCase().slice(0, 4)
             const col = TL_COLORS[key] || "#4a8fc4"
             return (
@@ -171,37 +212,124 @@ export default function Investigation() {
         </div>
       )}
 
-      {activeTab === 2 && (
-        <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
-          <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
-            detection logic · {behaviors.length} behaviors
-          </div>
-          {behaviors.slice(0, 20).map(b => (
-            <div key={b.behavior_id} style={{
-              marginBottom: 10, padding: "8px 10px", background: "var(--bg2)",
-              borderRadius: 3, border: "1px solid var(--ln)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t1)", fontWeight: 600 }}>
-                  {b.process_name || "unknown"}
-                </span>
-                <span style={{ fontSize: 9, color: "var(--t3)", fontFamily: "var(--mono)" }}>
-                  {b.mitre_technique || ""}
-                </span>
-              </div>
-              <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 4 }}>{b.description}</div>
-              {(b.detection_reasons || []).map((r: any, i: number) => (
-                <div key={i} style={{ fontSize: 9, color: "var(--t3)", display: "flex", gap: 6, marginTop: 2 }}>
-                  <span style={{ color: "var(--teal)" }}>+{r.weight}</span>
-                  <span>{r.reason}</span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Tab 3: Detection logic — FIX-08: was tab 2, now tab 3 */}
+      {activeTab === 3 && (() => {
+        // Group behaviors by description (same profile firing multiple times)
+        const grouped = behaviors.reduce((acc: Record<string, any[]>, b) => {
+          const key = b.description || "unknown"
+          if (!acc[key]) acc[key] = []
+          acc[key].push(b)
+          return acc
+        }, {})
 
-      {activeTab === 3 && (
+        return (
+          <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
+            {/* Header */}
+            <div style={{
+              fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+              letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12,
+              display: "flex", gap: 10, alignItems: "center",
+            }}>
+              <span>detection logic · {behaviors.length} behaviors</span>
+              <span style={{ color: "var(--t4)" }}>·</span>
+              <span>{Object.keys(grouped).length} unique profiles</span>
+            </div>
+
+            {Object.entries(grouped).map(([desc, hits]) => {
+              const first = hits[0]
+              const conf = (first.confidence || "unknown").toLowerCase()
+              const bclass = (first.behavior_class || first.tactic || "UNKNOWN").toUpperCase()
+              const confColor = CONF_COLOR[conf] || "var(--t3)"
+              const classColor = CLASS_COLOR[bclass] || "var(--t3)"
+              const technique = first.mitre_technique || ""
+              const reasons = first.detection_reasons || []
+
+              return (
+                <div key={desc} style={{
+                  marginBottom: 10, padding: "10px 12px", background: "var(--bg2)",
+                  borderRadius: 3, border: "1px solid var(--ln)",
+                  borderLeft: `2px solid ${classColor}88`,
+                }}>
+                  {/* Header row */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                    {/* Hit count badge */}
+                    {hits.length > 1 && (
+                      <span style={{
+                        fontSize: 9, fontFamily: "var(--mono)", padding: "1px 5px",
+                        borderRadius: 2, background: "var(--bg3)", color: "var(--t2)",
+                        border: "1px solid var(--ln)", flexShrink: 0,
+                      }}>×{hits.length}</span>
+                    )}
+                    {/* behavior_class */}
+                    <span style={{
+                      fontSize: 9, padding: "1px 5px", borderRadius: 2,
+                      background: `${classColor}14`, color: classColor,
+                      border: `1px solid ${classColor}44`, flexShrink: 0,
+                    }}>{bclass}</span>
+                    {/* confidence */}
+                    <span style={{
+                      fontSize: 9, fontFamily: "var(--mono)", color: confColor, flexShrink: 0,
+                    }}>{conf}</span>
+                    {/* technique */}
+                    {technique && (
+                      <span style={{
+                        fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", flexShrink: 0,
+                      }}>{technique}</span>
+                    )}
+                    {/* process name */}
+                    {first.process_name && first.process_name !== "unknown" && (
+                      <span style={{
+                        fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+                        marginLeft: "auto", flexShrink: 0,
+                      }}>{first.process_name}</span>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div style={{ fontSize: 11, color: "var(--t1)", lineHeight: 1.4 }}>
+                    {desc}
+                  </div>
+
+                  {/* Detection reasons */}
+                  {reasons.length > 0 && (
+                    <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--ln)" }}>
+                      {reasons.map((r: any, i: number) => (
+                        <div key={i} style={{
+                          fontSize: 9, color: "var(--t3)", display: "flex", gap: 6,
+                          marginTop: i > 0 ? 3 : 0, fontFamily: "var(--mono)",
+                        }}>
+                          <span style={{ color: "var(--teal)", flexShrink: 0 }}>+{r.weight}</span>
+                          <span>{r.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Repeated hit timestamps */}
+                  {hits.length > 1 && (
+                    <div style={{
+                      marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--ln)",
+                      display: "flex", flexWrap: "wrap", gap: 4,
+                    }}>
+                      {hits.map((h: any, i: number) => (
+                        <span key={i} style={{
+                          fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                          padding: "1px 4px", background: "var(--bg1)", borderRadius: 2,
+                        }}>
+                          {new Date(h.timestamp).toISOString().slice(11, 19)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
+
+      {/* Tab 4: Raw events — FIX-08: was tab 3, now tab 4 */}
+      {activeTab === 4 && (
         <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
           <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
             raw events
@@ -223,16 +351,7 @@ export default function Investigation() {
         </div>
       )}
 
-      {/* Cross-layer tab — CL-2 */}
-      {activeTab === 4 && (
-        <CrossLayerTab
-          behaviorId={targetBehavior?.behavior_id || ""}
-          behaviorTs={targetBehavior?.timestamp || ""}
-          behavior={behaviorContext}
-        />
-      )}
-
-      {/* Timeline strip — only on process tree tab */}
+      {/* Timeline strip — only on process tree tab (tab 0) */}
       {activeTab === 0 && (
         <div style={{
           height: 72, background: "var(--bg1)", borderTop: "1px solid var(--ln)",

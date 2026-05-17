@@ -1,0 +1,55 @@
+title: PowerShell Multi-Stage Attack Chain — Discovery to Persistence
+id: a1b2c3d4-0012-4e5f-a012-argus00000012
+status: test
+description: Correlation rule detecting a PowerShell process that spawns discovery tools (whoami, systeminfo, net) and subsequently creates scheduled tasks or modifies run keys. This chain — Discovery → Execution → Persistence — was the primary kill chain observed across all 6 cases formed during Argus stress test on 2026-05-16. Individual technique rules fire first; this rule surfaces the combined pattern for triage prioritization.
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://attack.mitre.org/techniques/T1033/
+    - https://attack.mitre.org/techniques/T1082/
+    - https://attack.mitre.org/techniques/T1053/005/
+    - https://attack.mitre.org/techniques/T1547/001/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.discovery
+    - attack.t1033
+    - attack.t1082
+    - attack.persistence
+    - attack.t1053.005
+    - attack.t1547.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    powershell_parent:
+        ParentImage|endswith: '\powershell.exe'
+    discovery_tools:
+        Image|endswith:
+            - '\whoami.exe'
+            - '\systeminfo.exe'
+            - '\ipconfig.exe'
+            - '\netstat.exe'
+            - '\net.exe'
+            - '\tasklist.exe'
+    persistence_tools:
+        Image|endswith:
+            - '\schtasks.exe'
+            - '\reg.exe'
+        CommandLine|contains:
+            - '/create'
+            - 'Run'
+            - 'CurrentVersion\Run'
+    condition: (powershell_parent and discovery_tools) or (powershell_parent and persistence_tools)
+falsepositives:
+    - Authorized admin scripts combining discovery and configuration tasks
+    - MDM/RMM tools running as PowerShell child processes
+level: high
+fields:
+    - Image
+    - CommandLine
+    - ParentImage
+    - ParentCommandLine
+    - User

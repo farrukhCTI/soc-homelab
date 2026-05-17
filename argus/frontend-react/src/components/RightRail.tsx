@@ -1,7 +1,9 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useArgus } from "../ArgusContext"
-import { fetchBriefing, fetchCaseSummary, postEscalate, postNote } from "../api"
+// FIX-05: fetchNetworkContext now imported from api.ts — single source of truth.
+// Previously defined as a local function here and duplicated in CrossLayerTab.tsx.
+import { fetchBriefing, fetchCaseSummary, fetchNetworkContext } from "../api"
 
 const TABS = ["Intel", "Entities", "Actions"]
 
@@ -18,7 +20,15 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
     setLoading(true)
     setStatus(null)
     try {
-      let body: any = { action, case_id: selectedCase.case_id, behavior_id: selectedCase.case_id, actor: "analyst" }
+      // FIX-10: Case-level actions correctly pass behavior_id as null.
+      // Previously passed selectedCase.case_id as behavior_id — wrong field.
+      // behavior_id is only relevant for behavior-level actions, not case closures.
+      const body: any = {
+        action,
+        case_id: selectedCase.case_id,
+        behavior_id: null,
+        actor: "analyst",
+      }
       if (action === "NOTE")     body.note = noteText
       if (action === "BLOCK_IP") body.note = ipText
       const res = await fetch("/api/actions", {
@@ -152,13 +162,6 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
       {status && status !== "ok" && (
         <div style={{ fontSize: 9, color: "var(--red)", fontFamily: "var(--mono)", marginTop: 6 }}>{status}</div>
       )}
-
-      <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3, marginTop: 8 }}>
-        <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--red)" }} />
-        <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
-          {selectedCase.status.toUpperCase()} · risk {selectedCase.risk_score.toLocaleString()}
-        </span>
-      </div>
     </div>
   )
 }
@@ -209,6 +212,13 @@ export default function RightRail() {
     staleTime: Infinity,
   })
 
+  const networkQuery = useQuery({
+    queryKey: ["network_context", selectedBehavior?.behavior_id],
+    queryFn: () => fetchNetworkContext(selectedBehavior!.behavior_id),
+    enabled: !!(selectedBehavior?.behavior_id) && activeRailTab === 1,
+    staleTime: 60000,
+  })
+
   return (
     <div style={{
       width: 218, flexShrink: 0, background: "var(--bg1)",
@@ -237,6 +247,14 @@ export default function RightRail() {
                 <div>No behavior record matched this process. This node was observed in the raw Sysmon window but was not flagged by the detection engine.</div>
               </div>
             )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3, marginTop: 8 }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--red)" }} />
+              <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+                {selectedCase ? `${selectedCase.status.toUpperCase()} · risk ${selectedCase.risk_score.toLocaleString()}` : "no case selected"}
+              </span>
+            </div>
+
             {selectedBehavior && selectedBehavior.behavior_id && briefQuery.data ? (
               <BriefingPanel data={briefQuery.data} />
             ) : selectedBehavior && selectedBehavior.behavior_id && briefQuery.isLoading ? (
@@ -266,6 +284,9 @@ export default function RightRail() {
             <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 6 }}>
               Entities
             </div>
+
+            {/* FIX-09: Static entity rows — arrows removed. These rows are informational,
+                not interactive. The arrow implied clickability that did not exist. */}
             {[
               ["◈", selectedCase.case_id, "case"],
               ["◈", `${selectedCase.behavior_count} behaviors`, "count"],
@@ -276,20 +297,111 @@ export default function RightRail() {
                 key={String(type)}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, padding: "5px 7px",
-                  borderRadius: 3, marginBottom: 2, cursor: "pointer",
-                  border: "1px solid transparent", transition: "background 0.1s",
+                  borderRadius: 3, marginBottom: 2,
+                  border: "1px solid transparent",
                 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "var(--bg3)" }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent" }}
               >
                 <span style={{ fontSize: 11, color: "var(--t3)" }}>{icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{val}</div>
                   <div style={{ fontSize: 8, color: "var(--t3)" }}>{type}</div>
                 </div>
-                <span style={{ fontSize: 9, color: "var(--t4)" }}>→</span>
               </div>
             ))}
+
+            {/* FIX-09: Hint shown when no behavior is selected.
+                Guides analyst to click a process node to load network context. */}
+            {!selectedBehavior?.behavior_id && (
+              <div style={{
+                marginTop: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+                lineHeight: 1.5, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3,
+              }}>
+                Click a process node in the tree to load network context.
+              </div>
+            )}
+
+            {/* Network context section — shown when behavior selected */}
+            {selectedBehavior?.behavior_id && (() => {
+              const nd = networkQuery.data
+              if (networkQuery.isLoading) return (
+                <div style={{ marginTop: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+                  Loading network context...
+                </div>
+              )
+              if (!nd?.has_network_data) return (
+                <div style={{ marginTop: 10, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3, border: "1px solid var(--ln)" }}>
+                  <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
+                    Network · no corroboration
+                  </div>
+                  <div style={{ fontSize: 9, color: "var(--t3)" }}>No Suricata events in ±15min window.</div>
+                </div>
+              )
+              const events = nd.network_events || []
+              const alerts = nd.alerts || []
+              const uniqueIps: string[] = nd.summary?.unique_ips || []
+              return (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ height: 1, background: "var(--ln2)", marginBottom: 8 }} />
+                  <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--teal)", textTransform: "uppercase", marginBottom: 6 }}>
+                    Network · {nd.summary?.returned} suricata events
+                  </div>
+
+                  {/* Destination IPs */}
+                  {uniqueIps.length > 0 && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>DEST IPs</div>
+                      {uniqueIps.map((ip: string) => (
+                        <div key={ip} style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t2)", padding: "2px 6px", background: "var(--bg3)", borderRadius: 2, marginBottom: 2 }}>
+                          {ip}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* HTTP/fileinfo events */}
+                  {events.length > 0 && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>HTTP FLOWS ({events.length})</div>
+                      {events.slice(0, 4).map((e: any, i: number) => (
+                        <div key={i} style={{ marginBottom: 4, padding: "4px 6px", background: "var(--bg3)", borderRadius: 2, border: "1px solid var(--ln)" }}>
+                          <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--teal)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {e.dest_ip}:{e.dest_port}
+                          </div>
+                          {e.url && (
+                            <div style={{ fontSize: 8, color: "var(--t3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {e.url}
+                            </div>
+                          )}
+                          <div style={{ fontSize: 8, color: "var(--t4)", fontFamily: "var(--mono)" }}>
+                            {new Date(e.timestamp).toISOString().slice(11, 19)}
+                          </div>
+                        </div>
+                      ))}
+                      {events.length > 4 && (
+                        <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)" }}>+{events.length - 4} more</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Suricata alerts */}
+                  {alerts.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>ALERTS ({alerts.length})</div>
+                      {alerts.slice(0, 3).map((a: any, i: number) => (
+                        <div key={i} style={{ marginBottom: 4, padding: "4px 6px", background: "var(--red2)", borderRadius: 2, border: "1px solid var(--red3)" }}>
+                          <div style={{ fontSize: 9, color: "var(--red)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {a.signature}
+                          </div>
+                          <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)" }}>
+                            sid:{a.signature_id} · sev:{a.severity}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </>
         )}
 

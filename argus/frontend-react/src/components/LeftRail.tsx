@@ -4,22 +4,9 @@ import { fetchCases } from "../api"
 import { useArgus } from "../ArgusContext"
 import type { Case } from "../types"
 
-function sparkPath(vals: number[], w: number, h: number) {
-  const max = Math.max(...vals)
-  const n = vals.length
-  const pts = vals.map((v, i) => [i / (n - 1) * w, h - (v / max) * h])
-  return "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join("L")
-}
-
-const SPARKS: Record<string, number[]> = {
-  "CASE-002": [2,5,12,30,55,80,107,95,60,40,20,10],
-  "CASE-004": [1,3,8,18,30,45,53,40,25,12],
-  "CASE-003": [1,2,10,22,38,50,52,44,30],
-  "CASE-005": [1,3,5,8,10,12,11,9,6],
-  "CASE-001": [1,2,4,7,11,14,17,15,10],
-  "CASE-006": [2,4,7,10,13,16,14,10,6],
-  "CASE-007": [1,3,6,9,12,14,12,9],
-}
+// FIX-06: sparkPath and SPARKS removed. Sparklines were hardcoded to old case IDs
+// and fell back to [1,2,3,4,3,2,1] for every new case — fake telemetry.
+// Replaced with tactic tag row which uses real data from the case document.
 
 const STATE_COLOR: Record<string, string> = {
   open: "var(--t3)",
@@ -76,19 +63,24 @@ export default function LeftRail() {
       </div>
 
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {visibleCases.map((c, i) => {
+        {visibleCases.map((c) => {
           const isHigh = c.highest_severity === "HIGH" || c.highest_severity === "CRITICAL"
           const col = isHigh ? "var(--red)" : "var(--amb)"
-          const spk = SPARKS[c.case_id] || [1,2,3,4,3,2,1]
           const sel = selectedCase?.case_id === c.case_id
-          const stateCol = STATE_COLOR[c.status] || "var(--t3)"
+          const stateCol = STATE_COLOR[c.status?.toLowerCase()] || "var(--t3)"
+
+          // FIX-12: Date prefix on timestamp. created_at comes from the API.
+          // Falls back gracefully if field is missing.
+          const datePrefix = c.created_at
+            ? new Date(c.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" }) + " · "
+            : ""
 
           return (
             <div
               key={c.case_id}
               onClick={() => select(c)}
               style={{
-                padding: "9px 12px 6px", cursor: "pointer",
+                padding: "9px 12px 8px", cursor: "pointer",
                 borderLeft: `2px solid ${sel ? "var(--teal)" : "transparent"}`,
                 borderBottom: "1px solid var(--ln)",
                 background: sel ? "var(--bg3)" : "transparent",
@@ -101,9 +93,12 @@ export default function LeftRail() {
                   {(c.risk_score / 1000).toFixed(1)}k
                 </span>
               </div>
+
+              {/* FIX-12: Date prefix added before time window */}
               <div style={{ fontSize: 11, color: "var(--t2)", marginBottom: 4, fontWeight: 500 }}>
-                {c.behavior_count} behaviors · {c.grouped_by.time_window || "window"}
+                {c.behavior_count} behaviors · {datePrefix}{c.grouped_by.time_window || "window"}
               </div>
+
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
                 <span style={{
                   fontSize: 8, fontWeight: 700, letterSpacing: "0.05em", padding: "2px 5px", borderRadius: 2,
@@ -115,24 +110,22 @@ export default function LeftRail() {
                   {c.status.toUpperCase()}
                 </span>
               </div>
-              <div style={{ height: 18, position: "relative" }}>
-                <svg viewBox="0 0 180 18" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
-                  <path d={sparkPath(spk, 180, 18)} fill="none" stroke={col} strokeWidth="1" opacity="0.45" />
-                </svg>
-                {i === 0 && (
-                  <div style={{
-                    position: "absolute", right: 0, top: 6,
-                    width: 4, height: 4, borderRadius: "50%", background: "var(--red)",
-                    animation: "argus-pulse 1.4s ease-in-out infinite",
-                  }} />
-                )}
+
+              {/* FIX-06: Tactic tag row replaces fake sparklines */}
+              <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 2 }}>
+                {(c.tactics_seen || []).slice(0, 3).map((t: string) => (
+                  <span key={t} style={{
+                    fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                    padding: "1px 4px", border: "1px solid var(--ln2)", borderRadius: 2,
+                  }}>
+                    {t}
+                  </span>
+                ))}
               </div>
             </div>
           )
         })}
       </div>
-
-      <style>{`@keyframes argus-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
     </div>
   )
 }

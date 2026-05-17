@@ -1,0 +1,32 @@
+title: Registry Query of Disk Enumeration Key
+id: a1b2c3d4-0009-4e5f-a009-argus00000009
+status: test
+description: Detects querying of HKLM\SYSTEM\CurrentControlSet\Services\Disk\Enum, used by attackers to enumerate attached storage devices and understand the target environment. Command observed directly in CASE-004 telemetry via "systeminfo & reg query HKLM\SYSTEM\CurrentControlSet\Services\Disk\Enum".
+references:
+    - https://attack.mitre.org/techniques/T1012/
+    - https://attack.mitre.org/techniques/T1082/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.discovery
+    - attack.t1012
+    - attack.t1082
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\reg.exe'
+        CommandLine|contains|all:
+            - 'query'
+            - 'Disk\Enum'
+    condition: selection
+falsepositives:
+    - Disk management utilities
+    - Hardware inventory tools
+level: low
+fields:
+    - CommandLine
+    - ParentImage
+    - User

@@ -93,7 +93,7 @@ def group_behaviors(behaviors):
         added = False
         for group in groups:
             # Same host and within 10min of latest event in group?
-            if group['host'] == host and abs((ts - group['latest_ts']).total_seconds()) <= 600:
+            if group["host"] == host and abs((ts - group["latest_ts"]).total_seconds()) <= 600:
                 group['items'].append((doc_id, behavior))
                 group['latest_ts'] = ts  # Update latest timestamp
                 added = True
@@ -267,9 +267,9 @@ def run_once():
     # MIN_TACTICS=2: single-tactic spam (pure DISCOVERY flood) doesn't form a case.
     # is_dense: at least 3 events within 2 minutes — burst vs slow scatter.
     # cooldown: 15min per host — prevents one burst spawning multiple cases.
-    MIN_CASE_SIZE = 5
-    MIN_TACTICS   = 2
-    COOLDOWN_SECS = 900  # 15 minutes
+    MIN_CASE_SIZE = 3
+    MIN_TACTICS   = 1
+    COOLDOWN_SECS = 120  # 2 minutes
 
     def tactic_count(group):
         return len(set(beh.get('tactic','') for _, beh in group['items'] if beh.get('tactic')))

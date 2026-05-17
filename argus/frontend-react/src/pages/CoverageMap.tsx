@@ -74,7 +74,7 @@ const ARGUS_PROFILES: Array<{
 
 // ─── Elastic/Sysmon rules — upstream detection engine ─────────────────────────
 // These are real rules exported from Kibana. Argus does not own these detections.
-// Source: 100 rules exported from Elastic Security (Sysmon + Suricata + Zeek).
+// Source: rules exported from Elastic Security (Sysmon + Suricata).
 const ELASTIC_TECHNIQUES: Record<string, { count: number; description: string }> = {
   "T1059":     { count: 8,  description: "Command and Scripting Interpreter" },
   "T1059.001": { count: 3,  description: "PowerShell" },
@@ -219,7 +219,7 @@ export default function CoverageMap() {
       {/* Summary stats */}
       <div style={{ display: "flex", gap: 10 }}>
         {[
-          { label: "Elastic Rules",          value: elasticCount,   sub: "Sysmon · Suricata · Zeek",    color: "var(--teal)" },
+          { label: "Elastic Rules",          value: elasticCount,   sub: "Sysmon · Suricata",           color: "var(--teal)" },
           { label: "Argus Signal Profiles",  value: argusCount,     sub: "EID 1 · 10 · 11 · 13",       color: "var(--amb)"  },
           { label: "ATT&CK Techniques",      value: techniqueCount, sub: "unique IDs, Argus layer",     color: "var(--t2)"   },
           { label: "High Confidence",        value: highCount,      sub: "precise signal profiles",     color: "rgba(229,83,75,0.9)" },
@@ -243,7 +243,7 @@ export default function CoverageMap() {
         padding: "12px 16px", display: "flex", gap: 0,
       }}>
         {[
-          { layer: "Layer 1", title: "Elastic Detection Engine", desc: "100 Sysmon, Suricata, and Zeek rules. Source of truth for raw detections. Argus does not own these.", color: "var(--teal)", icon: "◈" },
+          { layer: "Layer 1", title: "Elastic Detection Engine", desc: "Sysmon and Suricata rules. Source of truth for raw detections. Argus does not own these.", color: "var(--teal)", icon: "◈" },
           { layer: "Layer 2", title: "Argus Behavioral Signals", desc: `${argusCount} profiles across EID 1/10/11/13. Command-line context enrichment. Confidence-weighted. Max 3 per event.`, color: "var(--amb)", icon: "◉" },
           { layer: "Layer 3", title: "Cross-Layer Corroboration", desc: "EDR + NDR signal in same ±15min window. Sysmon behavior + Suricata alert = corroborated case. Phase B.", color: "rgba(123,109,212,0.9)", icon: "◎" },
         ].map(({ layer, title, desc, color, icon }, i) => (

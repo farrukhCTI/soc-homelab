@@ -121,7 +121,7 @@ The investigation begins with a network scan alert and expands through endpoint 
 
 ### Argus: SOC Investigation Console
 - Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
-- Case builder groups behaviors into cases using a 10-minute sliding window, density check, and multi-tactic requirement: prevents noise from generating false cases
+- Case builder groups behaviors into cases using a 10-minute sliding window, density check, and minimum behavior threshold: prevents noise from generating false cases
 - React workstation shell with persistent case queue, canvas-based process tree with zoom, pan, hover path tracing and node click, behavior timeline, detection logic, and raw events tabs
 - Claude Haiku integrated at three points: case summaries, per-behavior analyst briefings with next steps, and hunt workbench co-pilot: narration only, never used for scoring or detection
 - Hunt workbench with 7 ES|QL templates covering rare parent-child pairs, encoded PowerShell, scheduled task creation, network connections by process, registry persistence, LOLBin execution, and lateral movement patterns
@@ -260,6 +260,27 @@ soc-homelab/
 +-- detection-rules/
 |   +-- sysmon-custom-rules.ndjson
 |   +-- sysmon-custom-rules.ps1
++-- sigma-rules/
+|   +-- README.md
+|   +-- proc_create_powershell_execution_policy_bypass.yml
+|   +-- proc_create_powershell_download_cradle.yml
+|   +-- proc_create_schtasks_persistence.yml
+|   +-- registry_set_run_key_persistence.yml
+|   +-- proc_create_discovery_tool_scripted_parent.yml
+|   +-- proc_access_lsass_credential_dump.yml
+|   +-- proc_create_tasklist_lsass_discovery.yml
+|   +-- proc_create_cmd_wmic_process_enum.yml
+|   +-- proc_create_reg_query_disk_enum.yml
+|   +-- file_event_executable_dropped_temp.yml
+|   +-- proc_create_atomic_red_team_execution.yml
+|   +-- proc_create_powershell_discovery_persistence_chain.yml
++-- datasets/
+|   +-- README.md
+|   +-- argus-cases-2026-05-16.json
+|   +-- behaviors-CASE-004-2026-05-16.json
+|   +-- behaviors-CASE-005-2026-05-16.json
+|   +-- behaviors-CASE-006-2026-05-16.json
+|   +-- argus-actions-2026-05-16.json
 +-- config/
 |   +-- sysmon-config.xml
 +-- scripts/

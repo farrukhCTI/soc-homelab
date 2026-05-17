@@ -28,18 +28,13 @@ export default function TopBar({ view, setView }: Props) {
         paddingRight: 14, borderRight: "1px solid var(--ln2)",
       }}>ARGUS</span>
 
-      {/* Health pills */}
+      {/* FIX-03: Static system labels — no fake health dots */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
         padding: "0 14px", borderRight: "1px solid var(--ln2)",
       }}>
-        {([["ES","ok"],["Fleet","ok"],["ILM 61h","warn"]] as [string,string][]).map(([label, state]) => (
-          <span key={label} style={{ fontSize: 9, fontFamily: "var(--mono)", display: "flex", alignItems: "center", gap: 4, color: "var(--t3)" }}>
-            <span style={{
-              width: 4, height: 4, borderRadius: "50%",
-              background: state === "ok" ? "var(--grn)" : "var(--amb)",
-              display: "inline-block",
-            }} />
+        {(["ES", "Fleet", "ILM"] as string[]).map(label => (
+          <span key={label} style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
             {label}
           </span>
         ))}
@@ -84,24 +79,15 @@ export default function TopBar({ view, setView }: Props) {
 
       <div style={{ flex: 1 }} />
 
-      <div style={{
-        display: "flex", alignItems: "center", gap: 6,
-        background: "var(--bg2)", border: "1px solid var(--ln2)",
-        borderRadius: 3, padding: "4px 8px",
-      }}>
-        <span style={{ fontSize: 13, color: "var(--t3)" }}>⌕</span>
-        <input
-          placeholder="search..."
-          style={{ background: "transparent", border: "none", fontSize: 10, color: "var(--t2)", width: 130, outline: "none", fontFamily: "var(--mono)" }}
-        />
-      </div>
+      {/* FIX-01: Dead search bar removed */}
 
+      {/* FIX-13: Avatar changed from FE to AN (Analyst — neutral) */}
       <div style={{
         width: 22, height: 22, borderRadius: "50%", background: "var(--teal2)",
         border: "1px solid var(--teal3)", display: "flex", alignItems: "center",
         justifyContent: "center", fontSize: 9, fontWeight: 700, color: "var(--teal)",
         marginLeft: 10,
-      }}>FE</div>
+      }}>AN</div>
     </div>
   )
 }

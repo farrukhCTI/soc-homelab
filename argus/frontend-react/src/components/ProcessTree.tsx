@@ -64,8 +64,11 @@ function getTier(node: ApiNode): "root" | "red" | "blue" | "disc" {
   return "root"
 }
 
-function buildGraph(data: ApiTreeData): { flatNodes: FlatNode[]; edges: Edge[] } {
-  if (!data.nodes || data.nodes.length === 0) return { flatNodes: demoNodes(), edges: demoEdges() }
+// FIX-07: buildGraph no longer falls back to demo nodes when data is empty.
+// Returns null instead — the component renders a proper empty state.
+// Demo nodes were silently misleading: analyst could not tell real from synthetic.
+function buildGraph(data: ApiTreeData): { flatNodes: FlatNode[]; edges: Edge[] } | null {
+  if (!data.nodes || data.nodes.length === 0) return null
 
   const byId = new Map<string, ApiNode>()
   data.nodes.forEach(n => byId.set(n.id, n))
@@ -144,28 +147,6 @@ function buildGraph(data: ApiTreeData): { flatNodes: FlatNode[]; edges: Edge[] }
   return { flatNodes, edges }
 }
 
-function demoNodes(): FlatNode[] {
-  return [
-    { idx:0, id:"812",  label:"svchost.exe",   sub:"pid 812 · SYSTEM",   x:20,  y:170, hot:false, tier:"root" },
-    { idx:1, id:"3204", label:"powershell.exe", sub:"pid 3204 · encoded", x:190, y:100, hot:true,  tier:"red"  },
-    { idx:2, id:"3410", label:"cmd.exe",         sub:"pid 3410 · victim",  x:190, y:260, hot:true,  tier:"red"  },
-    { idx:3, id:"4012", label:"whoami.exe",      sub:"pid 4012",           x:360, y:50,  hot:false, tier:"disc" },
-    { idx:4, id:"4108", label:"schtasks.exe",    sub:"pid 4108 · PERSIST", x:360, y:150, hot:true,  tier:"red"  },
-    { idx:5, id:"4220", label:"net.exe",         sub:"pid 4220",           x:360, y:260, hot:false, tier:"disc" },
-    { idx:6, id:"5110", label:"ipconfig.exe",    sub:"pid 5110",           x:360, y:340, hot:false, tier:"disc" },
-  ]
-}
-function demoEdges(): Edge[] {
-  return [
-    { a:0, b:1, hot:true  },
-    { a:0, b:2, hot:true  },
-    { a:1, b:3, hot:false },
-    { a:1, b:4, hot:true  },
-    { a:2, b:5, hot:false },
-    { a:2, b:6, hot:false },
-  ]
-}
-
 interface BehaviorRef {
   behavior_id: string
   pid?: number
@@ -194,9 +175,29 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
   })
   const { setSelectedBehavior, setHoveredNodeId } = useArgus()
 
-  const { flatNodes, edges } = treeData
-    ? buildGraph(treeData)
-    : { flatNodes: demoNodes(), edges: demoEdges() }
+  // FIX-07: No demo fallback. If treeData is missing or empty, graph is null.
+  const graph = treeData ? buildGraph(treeData) : null
+  const flatNodes = graph?.flatNodes ?? []
+  const edges = graph?.edges ?? []
+
+  // FIX-07: Empty state — shown when no real process lineage exists.
+  // This is the correct behaviour: tell the analyst there is no data,
+  // rather than silently rendering synthetic nodes.
+  if (!graph) {
+    return (
+      <div style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        color: "var(--t3)", fontFamily: "var(--mono)", gap: 6,
+        background: "var(--bg0)",
+      }}>
+        <div style={{ fontSize: 11 }}>No process lineage available for this behavior.</div>
+        <div style={{ fontSize: 9, color: "var(--t4)" }}>
+          Select a behavior from the timeline or click a node once the tree loads.
+        </div>
+      </div>
+    )
+  }
 
   function wx(x: number) { return x * stateRef.current.scale + stateRef.current.panX }
   function wy(y: number) { return y * stateRef.current.scale + stateRef.current.panY }

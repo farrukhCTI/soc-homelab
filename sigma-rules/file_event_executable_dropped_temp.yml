@@ -1,0 +1,42 @@
+title: Executable Dropped in Temp Directory
+id: a1b2c3d4-0010-4e5f-a010-argus00000010
+status: test
+description: Detects executable files written to user or system temp directories. Observed repeatedly in Argus stress test (T1105) — Atomic Red Team drops payloads to %TEMP% before execution. Sysmon EID 11 (file creation) captures these writes. High volume of this event in a short window indicates staged payload delivery.
+references:
+    - https://attack.mitre.org/techniques/T1105/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.execution
+    - attack.t1105
+logsource:
+    category: file_event
+    product: windows
+detection:
+    selection:
+        TargetFilename|contains:
+            - '\AppData\Local\Temp\'
+            - '\Windows\Temp\'
+            - '\Temp\'
+        TargetFilename|endswith:
+            - '.exe'
+            - '.dll'
+            - '.bat'
+            - '.ps1'
+            - '.vbs'
+    filter_known_installers:
+        Image|contains:
+            - '\MsiExec.exe'
+            - '\msiexec.exe'
+            - '\setup.exe'
+            - '\install.exe'
+    condition: selection and not filter_known_installers
+falsepositives:
+    - Software installers extracting temp files
+    - Browser downloads opened from temp
+level: medium
+fields:
+    - TargetFilename
+    - Image
+    - User

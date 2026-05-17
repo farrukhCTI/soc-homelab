@@ -1,0 +1,49 @@
+title: Discovery Tool Burst from Scripted Parent
+id: a1b2c3d4-0005-4e5f-a005-argus00000005
+status: test
+description: Detects discovery tools (whoami, systeminfo, ipconfig, net, netstat) spawned from PowerShell or cmd.exe. In isolation these are low signal. Spawned from a scripted parent in rapid succession they indicate automated post-exploitation reconnaissance. Pattern confirmed in Argus stress test across T1033, T1082, T1016, T1049.
+references:
+    - https://attack.mitre.org/techniques/T1033/
+    - https://attack.mitre.org/techniques/T1082/
+    - https://attack.mitre.org/techniques/T1016/
+    - https://attack.mitre.org/techniques/T1049/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.discovery
+    - attack.t1033
+    - attack.t1082
+    - attack.t1016
+    - attack.t1049
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith:
+            - '\whoami.exe'
+            - '\systeminfo.exe'
+            - '\ipconfig.exe'
+            - '\netstat.exe'
+            - '\net.exe'
+            - '\net1.exe'
+            - '\hostname.exe'
+            - '\nbtstat.exe'
+            - '\arp.exe'
+        ParentImage|endswith:
+            - '\powershell.exe'
+            - '\cmd.exe'
+            - '\wscript.exe'
+            - '\cscript.exe'
+    condition: selection
+falsepositives:
+    - IT support scripts
+    - Monitoring agents (filter by ParentImage path if known)
+level: medium
+fields:
+    - Image
+    - CommandLine
+    - ParentImage
+    - ParentCommandLine
+    - User

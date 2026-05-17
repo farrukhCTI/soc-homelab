@@ -1,0 +1,37 @@
+title: Process Discovery via Tasklist with LSASS Filter
+id: a1b2c3d4-0007-4e5f-a007-argus00000007
+status: test
+description: Detects tasklist.exe usage combined with findstr filtering for lsass, indicating an attacker enumerating processes to confirm credential store availability before dumping. Command line pattern "tasklist | findstr lsass" observed directly in CASE-004 telemetry on 2026-05-16.
+references:
+    - https://attack.mitre.org/techniques/T1057/
+    - https://attack.mitre.org/techniques/T1003/001/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.discovery
+    - attack.t1057
+    - attack.credential_access
+    - attack.t1003.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_cmd:
+        Image|endswith: '\cmd.exe'
+        CommandLine|contains|all:
+            - 'tasklist'
+            - 'lsass'
+    selection_tasklist:
+        Image|endswith: '\tasklist.exe'
+        CommandLine|contains: 'lsass'
+    condition: selection_cmd or selection_tasklist
+falsepositives:
+    - Security software inventory checks
+    - Helpdesk troubleshooting scripts (rare)
+level: high
+fields:
+    - CommandLine
+    - ParentImage
+    - ParentCommandLine
+    - User

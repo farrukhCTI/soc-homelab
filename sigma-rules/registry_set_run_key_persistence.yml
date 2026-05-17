@@ -1,0 +1,36 @@
+title: Registry Run Key Write for Persistence
+id: a1b2c3d4-0004-4e5f-a004-argus00000004
+status: test
+description: Detects writes to common registry run key locations used for persistence. Observed in Argus stress test (T1547.001) and IR-006 scenario. Sysmon EID 13 captures registry value set events on these paths.
+references:
+    - https://attack.mitre.org/techniques/T1547/001/
+    - https://github.com/farrukhCTI/soc-homelab
+author: Farrukh (farrukhCTI)
+date: 2026-05-16
+tags:
+    - attack.persistence
+    - attack.t1547.001
+logsource:
+    category: registry_set
+    product: windows
+detection:
+    selection:
+        TargetObject|contains:
+            - '\Software\Microsoft\Windows\CurrentVersion\Run'
+            - '\Software\Microsoft\Windows\CurrentVersion\RunOnce'
+            - '\Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
+            - '\SYSTEM\CurrentControlSet\Services'
+    filter_legitimate:
+        Image|contains:
+            - '\MsiExec.exe'
+            - '\msiexec.exe'
+    condition: selection and not filter_legitimate
+falsepositives:
+    - Software installation via MSI packages
+    - Legitimate startup program configuration by admin
+level: high
+fields:
+    - TargetObject
+    - Details
+    - Image
+    - User
