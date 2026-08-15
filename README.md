@@ -4,13 +4,21 @@
 
 This lab demonstrates how a single network alert can be expanded into a full kill chain investigation using endpoint telemetry and cross-layer correlation. It also hosts **Argus**, a custom SOC investigation console built on top of the Elastic Stack.
 
-> **Status:** This repository is being converted into a reproducible portable demonstration. The original Proxmox based live range has been decommissioned and is documented as historical architecture. See `docs/CLAIM-INVENTORY.md` for what is currently verified versus in progress.
+> **Status:** This repository is being converted into a reproducible portable demonstration. The original Proxmox based live range has been decommissioned and is documented as historical architecture. See [docs/CLAIM-INVENTORY.md](docs/CLAIM-INVENTORY.md) for what is currently verified versus in progress.
 
 ---
 
 ## What You Can Run Today, Now
 
 Everything below is independently verified, not aspirational. Full checklist and detail: [docs/CURRENT-DEMO.md](docs/CURRENT-DEMO.md).
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (WSL2 backend on Windows), Git, and Python 3.10+ on the host if you want to run Hermes directly (everything else runs entirely in containers, nothing else to install).
+
+**Clone it:**
+```
+git clone https://github.com/farrukhCTI/soc-homelab.git
+cd soc-homelab
+```
 
 **The full stack, one command:**
 ```
@@ -23,15 +31,15 @@ Expect: `docker compose ps` shows six containers (`elasticsearch`, `kibana`, `ar
 ```
 docker compose run --rm seed
 ```
-Expect: log output showing cases and behaviors indexed, and any dropped or remapped seed data explained inline (the original export had some integrity issues, see `docs/CLAIM-INVENTORY.md`). Safe to re-run, deletes and recreates the demo indices each time, produces identical results on every run.
+Expect: log output showing cases and behaviors indexed, and any dropped or remapped seed data explained inline (the original export had some integrity issues, see [docs/CLAIM-INVENTORY.md](docs/CLAIM-INVENTORY.md)). Safe to re-run, deletes and recreates the demo indices each time, produces identical results on every run.
 
-**Argus frontend:** open `http://localhost:5173`. Expect a case queue with 4 real seeded cases (CASE-001, 004, 005, 006), sortable by risk score. Click a case to see its behavior timeline in correct chronological order with burst-window detection. Hunt Workbench and Process Tree both run and render correctly, but require raw Sysmon telemetry that isn't part of the seeded dataset (see `datasets/README.md`), so they'll show a clear "no raw telemetry available" message rather than results, on seeded data alone that's expected, not broken.
+**Argus frontend:** open `http://localhost:5173`. Expect a case queue with 4 real seeded cases (CASE-001, 004, 005, 006), sortable by risk score. Click a case to see its behavior timeline in correct chronological order with burst-window detection. Hunt Workbench and Process Tree both run and render correctly, but require raw Sysmon telemetry that isn't part of the seeded dataset (see [datasets/README.md](datasets/README.md)), so they'll show a clear "no raw telemetry available" message rather than results, on seeded data alone that's expected, not broken.
 
 **Analyst action trail:** from any case, log a NOTE, ESCALATE, or BLOCK IP action. Expect it to persist after a browser refresh, with a real Elasticsearch document ID returned and shown, not just a silent "ok."
 
 **IR-006** ([full report](investigation-reports/IR-006/IR-006-argus-detection-powershell-persistence.md)): a real investigation conducted inside Argus, corrected during this remediation so every remaining claim traces to a specific screenshot or cross-referenced number, unevidenced stages were cut rather than caveated.
 
-**Hermes**, rebuilt from scratch as a deterministic dry-run, no Discord, no external service:
+**[Hermes](hermes/)**, rebuilt from scratch as a deterministic dry-run, no Discord, no external service. Legacy output reference (historical, not reproducible): [hermes/legacy-output-examples/CASE-020-discord-output.md](hermes/legacy-output-examples/CASE-020-discord-output.md).
 ```
 python -m hermes.cli dry-run --scenario noise
 python -m hermes.cli dry-run --scenario signal
@@ -91,7 +99,7 @@ Checks Elasticsearch health, seeded data, the API, the frontend, a live analyst-
 
 ## Argus: SOC Investigation Console
 
-Argus is a behavior driven SOC investigation console built on top of this lab's Elastic Stack. It runs three Python daemons continuously: a behavior detector that polls Sysmon telemetry every 60 seconds and maps events to 96 MITRE mapped detection rules, a case builder that groups behaviors into cases using a 10 minute sliding window with density requirements, and a FastAPI backend serving a React frontend.
+Argus is a behavior driven SOC investigation console built on top of this lab's Elastic Stack. It runs three Python daemons continuously: a behavior detector that polls Sysmon telemetry every 60 seconds and maps events to 44 MITRE mapped detection rules, a case builder that groups behaviors into cases using a 10 minute sliding window with density requirements, and a FastAPI backend serving a React frontend.
 
 The frontend is a workstation style layout: case queue on the left, process tree investigation workspace in the center, AI briefing and analyst actions on the right. Claude Haiku is integrated at three points: case summaries, behavior level briefings with next steps, and a hunt workbench co-pilot. All AI output is narration only. Detection and scoring are fully deterministic.
 
@@ -114,7 +122,7 @@ IR-001 through IR-005 cover a connected kill chain simulating LOLBin based post 
 
 IR-005 is the Kibana era centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert by pivoting on timestamp, chaining ProcessGuid relationships, and validating activity independently across both EDR and NDR datasets.
 
-IR-006 is the Argus era centrepiece: a controlled simulation investigated entirely inside the Argus console. CASE-011 (26 behaviors, risk 5,109) was triaged through process tree analysis, cross-layer corroboration (6 Suricata events independently confirming EDR observed PowerShell HTTP activity), entity pivot to the hunt workbench, and analyst action logging. It is the first investigation to demonstrate the full Argus workflow end to end. Every claim in the report was verified against its cited evidence during this remediation, five factual errors were corrected and unevidenced later-stage claims were removed, see the report itself and `docs/CLAIM-INVENTORY.md` for what changed.
+IR-006 is the Argus era centrepiece: a controlled simulation investigated entirely inside the Argus console. CASE-011 (26 behaviors, risk 5,109) was triaged through process tree analysis, cross-layer corroboration (6 Suricata events independently confirming EDR observed PowerShell HTTP activity), entity pivot to the hunt workbench, and analyst action logging. It is the first investigation to demonstrate the full Argus workflow end to end. Every claim in the report was verified against its cited evidence during this remediation, five factual errors were corrected and unevidenced later-stage claims were removed, see the report itself and [docs/CLAIM-INVENTORY.md](docs/CLAIM-INVENTORY.md) for what changed.
 
 ---
 
@@ -161,7 +169,7 @@ The investigation begins with a network scan alert and expands through endpoint 
 - Conducted a complete Argus investigation in IR-006 against CASE-011: process tree analysis, cross-layer corroboration of 3x PowerShell HTTP retrievals across independent EDR and NDR pipelines, entity pivot to hunt workbench, and analyst action logging
 
 ### Argus: SOC Investigation Console
-- Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
+- Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 44 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index
 - Case builder groups behaviors into cases using a 10 minute sliding window, density check, and minimum behavior threshold: prevents noise from generating false cases
 - React workstation shell with persistent case queue, canvas based process tree with zoom, pan, hover path tracing and node click, behavior timeline, detection logic, and raw events tabs
 - Claude Haiku integrated at three points: case summaries, per-behavior analyst briefings with next steps, and hunt workbench co-pilot: narration only, never used for scoring or detection
@@ -287,7 +295,7 @@ Fires within 5 seconds of Nmap SYN scan initiation. Validated in IR-002.
 
 - 96 custom KQL based detection rules
 - Coverage across MITRE ATT&CK tactics
-- Export: `detection-rules/sysmon-custom-rules.ndjson`
+- Export: [detection-rules/sysmon-custom-rules.ndjson](detection-rules/sysmon-custom-rules.ndjson)
 
 ---
 
@@ -297,11 +305,16 @@ Fires within 5 seconds of Nmap SYN scan initiation. Validated in IR-002.
 soc-homelab/
 +-- README.md
 +-- DASHBOARDS.md
++-- docker-compose.yml            # single entrypoint: argus-api, behavior_detector,
+|                                 # case_builder, frontend, seed (one-off), plus the
+|                                 # Elastic stack below via `include:`
++-- .env.example                  # copy to .env, fill in secrets, gitignored
 +-- diagrams/
 |   +-- homelab-diagram.png
 +-- docker/
 |   +-- elastic/
-|       +-- docker-compose.yml
+|       +-- docker-compose.yml    # Elasticsearch + Kibana, also runs standalone
+|       +-- .env.example
 +-- detection-rules/
 |   +-- sysmon-custom-rules.ndjson
 |   +-- sysmon-custom-rules.ps1
@@ -322,46 +335,64 @@ soc-homelab/
 +-- datasets/
 |   +-- README.md
 |   +-- argus-cases-2026-05-16.json
+|   +-- argus-actions-2026-05-16.json
+|   +-- behaviors-CASE-001-2026-05-16.json
+|   +-- behaviors-CASE-002-2026-05-16.json
+|   +-- behaviors-CASE-003-2026-05-16.json
 |   +-- behaviors-CASE-004-2026-05-16.json
 |   +-- behaviors-CASE-005-2026-05-16.json
 |   +-- behaviors-CASE-006-2026-05-16.json
-|   +-- argus-actions-2026-05-16.json
 +-- config/
 |   +-- sysmon-config.xml
 +-- scripts/
+|   +-- verify-demo.sh            # one-command health check, see above
 |   +-- Create-SysmonDetectionRules.ps1
 +-- dashboards/
 |   +-- kibana-dashboards.ndjson
++-- hermes/                       # deterministic NOISE/SIGNAL dry-run, see above
+|   +-- cli.py
+|   +-- dispatcher.py
+|   +-- state_manager.py
+|   +-- workflow_base.py
+|   +-- reporting.py
+|   +-- fixtures/
+|   |   +-- noise.json
+|   |   +-- signal.json
+|   +-- legacy-output-examples/
+|       +-- CASE-020-discord-output.md   # historical reference only, see docs/HISTORICAL-LAB.md
 +-- argus/
 |   +-- ARGUS.md
+|   +-- Dockerfile                # shared image: api, behavior_detector, case_builder, seed
+|   +-- requirements.txt
+|   +-- app.py
 |   +-- behavior_detector.py
 |   +-- case_builder.py
 |   +-- process_tree_builder.py
 |   +-- hunt_engine.py
-|   +-- app.py
-|   +-- start_argus.ps1
+|   +-- seed_argus.py
+|   +-- start_argus.bat           # legacy manual startup, superseded by docker-compose.yml
 |   +-- frontend-react/
+|   |   +-- Dockerfile
+|   |   +-- src/
 |   +-- screenshots/
-|       +-- Case_Queue_.png
-|       +-- Case_selected.png
-|       +-- Process_Tree_Full_Chain.png
-|       +-- Process_tree.png
-|       +-- Timeline.png
-|       +-- Hunt_Workbench.png
-|       +-- Hunt_Workbench_Claude_Integration.png
+|       +-- case_queue.png
+|       +-- case_queue_updated.png
+|       +-- case_selected.png
+|       +-- crosslayer_tab.png
+|       +-- hunt_workbench.png
+|       +-- hunt_workbench_copilot.png
+|       +-- hunt_workbench_pivot.png
+|       +-- process_tree_full_chain.png
+|       +-- process_tree_node_click.png
+|       +-- timeline.png
 +-- investigation-reports/
 |   +-- dashboards/
 |   |   +-- screenshots/
-|   +-- IR-001/
-|   +-- IR-002/
-|   +-- IR-003/
-|   +-- IR-004/
-|   +-- IR-005/
+|   +-- IR-001/ through IR-005/   # each has screenshots/ and raw-events/
 |   +-- IR-006/
 |       +-- IR-006-argus-detection-powershell-persistence.md
 |       +-- IR-006-notes.txt
-|       +-- screenshots/
-|       +-- raw-events/
+|       +-- screenshots/          # no raw-events/ for this report, see the report itself
 +-- docs/
     +-- CLAIM-INVENTORY.md
     +-- CURRENT-DEMO.md
@@ -383,10 +414,11 @@ soc-homelab/
 | pfSense | CE 2.8.1 | Routing and IDS, historical |
 | Proxmox | VE | Hypervisor (Node 2), historical |
 | Kali Linux | Latest | Attack platform, historical |
-| Python | 3.14 | Argus daemons |
-| React 18 + TypeScript | Vite 8 | Argus frontend |
-| FastAPI | Latest | Argus API backend |
-| Claude Haiku | claude-haiku-4-5 | Argus AI narration layer |
+| Python | 3.12 | Argus daemons (containerized, see `argus/Dockerfile`) |
+| Node.js | 22 | Frontend build environment (containerized, see `argus/frontend-react/Dockerfile`) |
+| React 19 + TypeScript 6 | Vite 8 | Argus frontend |
+| FastAPI | 0.115.6 | Argus API backend |
+| Claude Haiku | claude-haiku-4-5-20251001 | Argus AI narration layer |
 
 ---
 
