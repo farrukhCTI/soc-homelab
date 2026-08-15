@@ -515,7 +515,20 @@ async def get_process_tree(behavior_id: str):
         return {"ok": True, **tree}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Tree build failed: {str(e)}")
+        error = str(e)
+        # process_tree_builder.py queries raw Sysmon EID 1 from
+        # logs-winlog.winlog-default directly. Same gap as the hunt
+        # templates in hunt_engine.py: this index is never part of the
+        # portable demo's seed data, only Argus's own processed
+        # cases/behaviors are seeded (see datasets/README.md).
+        if "index_not_found_exception" in error or "Unknown index" in error:
+            error = (
+                "No raw Sysmon telemetry available. Process tree requires "
+                "logs-winlog.winlog-default, which isn't part of the seeded "
+                "demo data (see datasets/README.md) -- only Argus's own "
+                f"processed cases/behaviors are seeded. Original error: {error}"
+            )
+        raise HTTPException(status_code=500, detail=f"Tree build failed: {error}")
 
 
 # ---------------------------------------------------------------------------

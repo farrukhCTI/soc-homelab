@@ -8,8 +8,47 @@ This lab demonstrates how a single network alert can be expanded into a full kil
 
 ---
 
+## What You Can Run Today, Now
+
+Everything below is independently verified, not aspirational. Full checklist and detail: [docs/CURRENT-DEMO.md](docs/CURRENT-DEMO.md).
+
+**The full stack, one command:**
+```
+wsl -d docker-desktop sysctl -w vm.max_map_count=262144   # Windows/WSL2 only, resets on every reboot
+docker compose up --build -d
+```
+Expect: `docker compose ps` shows six containers (`elasticsearch`, `kibana`, `argus-api`, `behavior_detector`, `case_builder`, `frontend`) all `Up`, with `elasticsearch` and `argus-api` marked `healthy`. No manual multi-terminal startup, no undocumented steps.
+
+**Seed demo data:**
+```
+docker compose run --rm seed
+```
+Expect: log output showing cases and behaviors indexed, and any dropped or remapped seed data explained inline (the original export had some integrity issues, see `docs/CLAIM-INVENTORY.md`). Safe to re-run, deletes and recreates the demo indices each time, produces identical results on every run.
+
+**Argus frontend:** open `http://localhost:5173`. Expect a case queue with 4 real seeded cases (CASE-001, 004, 005, 006), sortable by risk score. Click a case to see its behavior timeline in correct chronological order with burst-window detection. Hunt Workbench and Process Tree both run and render correctly, but require raw Sysmon telemetry that isn't part of the seeded dataset (see `datasets/README.md`), so they'll show a clear "no raw telemetry available" message rather than results, on seeded data alone that's expected, not broken.
+
+**Analyst action trail:** from any case, log a NOTE, ESCALATE, or BLOCK IP action. Expect it to persist after a browser refresh, with a real Elasticsearch document ID returned and shown, not just a silent "ok."
+
+**IR-006** ([full report](investigation-reports/IR-006/IR-006-argus-detection-powershell-persistence.md)): a real investigation conducted inside Argus, corrected during this remediation so every remaining claim traces to a specific screenshot or cross-referenced number, unevidenced stages were cut rather than caveated.
+
+**Hermes**, rebuilt from scratch as a deterministic dry-run, no Discord, no external service:
+```
+python -m hermes.cli dry-run --scenario noise
+python -m hermes.cli dry-run --scenario signal
+```
+Expect two JSON decisions (`{"decision": "NOISE"|"SIGNAL", "reasons": [...], "evidence_ids": [...]}`), computed by plain conditional logic against fixture evidence, no LLM in the decision path. Run either command twice, the output is byte-for-byte identical both times.
+
+**Verify all of the above in one shot:**
+```
+./scripts/verify-demo.sh
+```
+Checks Elasticsearch health, seeded data, the API, the frontend, a live analyst-action write-read cycle, and both Hermes scenarios, ending in a single `RESULT: PASS` or `RESULT: FAIL` line.
+
+---
+
 ## Contents
 
+- [What You Can Run Today, Now](#what-you-can-run-today-now)
 - [How to Review This Project](#how-to-review-this-project)
 - [What This Demonstrates](#what-this-demonstrates)
 - [Argus: SOC Investigation Console](#argus-soc-investigation-console)
@@ -71,11 +110,11 @@ IR-001 through IR-005 cover a connected kill chain simulating LOLBin based post 
 | IR-003 | Encoded PowerShell Execution and C2 Beaconing | T1059.001, T1027, T1071.001, T1105 | Kibana | Complete |
 | IR-004 | Defense Evasion and Persistence | T1218.005, T1547.001, T1562.001, T1036 | Kibana | Complete |
 | IR-005 | Correlated Kill Chain Hunt | Cross-layer, all TTPs | Kibana | Complete |
-| IR-006 | PowerShell-Originated Payload Retrieval and Persistence | T1059.001, T1105, T1053.005, T1082, T1016, T1049, T1033 | Argus | Complete |
+| IR-006 | PowerShell Host Discovery and Payload Retrieval | T1059.001, T1105, T1082, T1016, T1049, T1033 | Argus | Complete |
 
 IR-005 is the Kibana era centrepiece: a pure analyst exercise reconstructing the full kill chain from a single NDR alert by pivoting on timestamp, chaining ProcessGuid relationships, and validating activity independently across both EDR and NDR datasets.
 
-IR-006 is the Argus era centrepiece: a controlled simulation investigated entirely inside the Argus console. CASE-011 (26 behaviors, risk 5,109) was triaged through process tree analysis, cross-layer corroboration (6 Suricata events independently confirming EDR observed PowerShell HTTP activity), entity pivot to the hunt workbench, and analyst action logging. It is the first investigation to demonstrate the full Argus workflow end to end against live telemetry.
+IR-006 is the Argus era centrepiece: a controlled simulation investigated entirely inside the Argus console. CASE-011 (26 behaviors, risk 5,109) was triaged through process tree analysis, cross-layer corroboration (6 Suricata events independently confirming EDR observed PowerShell HTTP activity), entity pivot to the hunt workbench, and analyst action logging. It is the first investigation to demonstrate the full Argus workflow end to end. Every claim in the report was verified against its cited evidence during this remediation, five factual errors were corrected and unevidenced later-stage claims were removed, see the report itself and `docs/CLAIM-INVENTORY.md` for what changed.
 
 ---
 
@@ -119,7 +158,7 @@ The investigation begins with a network scan alert and expands through endpoint 
 - Executed a connected IR-002 through IR-005 kill chain with Defender ON throughout, all techniques LOLBin based, no malware required
 - Reconstructed the full kill chain in IR-005 using three pivot points: NDR timestamp anchor, ProcessGuid parent-child chain, and cross-layer correlation
 - Confirmed that endpoint and network telemetry independently corroborate the same C2 channel: 23 Sysmon EID 3 events and 23 Suricata HTTP flow records, matching source IP, destination IP, and timestamp window, collected by two separate sensors with no shared data path
-- Conducted a complete Argus investigation in IR-006 against CASE-011: process tree analysis, cross-layer corroboration of 3x PowerShell HTTP retrievals across independent EDR and NDR pipelines, entity pivot to hunt workbench, and analyst action logging, full workflow validated against live telemetry
+- Conducted a complete Argus investigation in IR-006 against CASE-011: process tree analysis, cross-layer corroboration of 3x PowerShell HTTP retrievals across independent EDR and NDR pipelines, entity pivot to hunt workbench, and analyst action logging
 
 ### Argus: SOC Investigation Console
 - Behavior detector polls Elasticsearch every 60 seconds, maps raw Sysmon EID 1 events to MITRE ATT&CK using 96 custom detection rules, writes structured behavior documents with deterministic IDs to a dedicated index

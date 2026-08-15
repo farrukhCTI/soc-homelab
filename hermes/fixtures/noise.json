@@ -1,0 +1,17 @@
+{
+  "scenario": "noise",
+  "case_id": "CASE-HERMES-NOISE-DEMO",
+  "host": "desktop-mm1rem9",
+  "evidence": [
+    {
+      "evidence_id": "EVID-N001",
+      "source": "edr",
+      "type": "process_create",
+      "timestamp": "2026-08-10T09:12:03Z",
+      "image": "C:\\Windows\\System32\\whoami.exe",
+      "command_line": "\"C:\\Windows\\System32\\whoami.exe\" /all",
+      "parent_image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "encoded": false
+    }
+  ]
+}

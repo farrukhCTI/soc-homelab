@@ -395,12 +395,28 @@ def run_hunt(template_id: str, **params) -> dict:
     try:
         resp = es.esql.query(body={"query": query})
     except Exception as e:
+        error = str(e)
+        # Every hunt template queries logs-winlog.winlog-default (raw Sysmon
+        # EDR telemetry). The portable demo's seed data only covers the
+        # application-layer indices (argus-cases/-behaviors/-actions) --
+        # raw telemetry was never part of that export, the same scope
+        # limitation datasets/README.md already documents for Suricata/NDR
+        # data. Without this, a missing-index verification_exception reads
+        # like a system failure instead of an expected, documented gap.
+        if "Unknown index" in error or "index_not_found_exception" in error:
+            error = (
+                "No raw Sysmon telemetry available. Hunt Workbench queries "
+                "logs-winlog.winlog-default directly, which isn't part of the "
+                "seeded demo data (see datasets/README.md) -- only Argus's own "
+                "processed cases/behaviors/actions are seeded. Original error: "
+                f"{error}"
+            )
         return {
             "ok":          False,
             "template_id": template_id,
             "template":    template,
             "query":       query,
-            "error":       str(e),
+            "error":       error,
         }
 
     columns = resp.get("columns", [])

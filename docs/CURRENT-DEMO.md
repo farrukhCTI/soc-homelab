@@ -19,9 +19,9 @@ This section is filled in as each piece is verified working from a clean environ
 - [x] Argus frontend displays seeded cases and behaviors correctly, confirmed through its own `/api` proxy path
 - [x] Analyst actions can be recorded and persist after a refresh, confirmed with a live write-read-refresh cycle including a real `action_id` returned and surfaced
 - [ ] Hunt workbench, process tree, and timeline screens verified against the new seed data
-- [ ] Hermes exists in this repository as real code
-- [ ] Hermes produces a deterministic NOISE decision from a fixture
-- [ ] Hermes produces a deterministic SIGNAL decision from a fixture
+- [x] Hermes exists in this repository as real code, under `hermes/`
+- [x] Hermes produces a deterministic NOISE decision from a fixture
+- [x] Hermes produces a deterministic SIGNAL decision from a fixture
 - [ ] IR-006 raw-events folder backfilled to match IR-002 through IR-005
 - [ ] A person with no prior context can clone this repo and reach a working demo using only the README (clean-room test not yet run)
 
@@ -63,7 +63,14 @@ curl http://localhost:5173/api/cases
 
 Both should return the same seeded cases. The frontend is reachable at `http://localhost:5173`.
 
-Hermes startup instructions will be added here once it exists and is verified.
+Run Hermes (no Docker service needed, it's a standalone CLI, not a daemon; run from the repo root, not from inside `hermes/`):
+
+```powershell
+python -m hermes.cli dry-run --scenario noise
+python -m hermes.cli dry-run --scenario signal
+```
+
+Each prints a JSON decision (`{"decision": "NOISE"|"SIGNAL", "reasons": [...], "evidence_ids": [...]}`) computed deterministically from the fixture in `hermes/fixtures/`. No Discord, no external service, no live environment involved.
 
 ## Known Data Notes
 
@@ -74,4 +81,4 @@ The seed loader (`seed_argus.py`) recomputes case metadata from the actual seede
 - The original two node Proxmox lab. See [HISTORICAL-LAB.md](HISTORICAL-LAB.md).
 - Live attacker or victim VMs. Telemetry in the demo comes from seeded fixture data, not live attack execution.
 - Kali, pfSense, and Windows victim infrastructure. None of this is required to run or evaluate the demo.
-- Hermes. Not yet present in the repository, see CLAIM-INVENTORY.md.
+- Hermes is present and runnable (see Quick Start above) but is a standalone CLI dry-run tool, not wired into `docker compose up` as a service, and not integrated with Argus's live case data. It evaluates its own fixtures independently.

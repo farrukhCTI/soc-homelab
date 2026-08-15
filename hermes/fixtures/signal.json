@@ -1,0 +1,43 @@
+{
+  "scenario": "signal",
+  "case_id": "CASE-HERMES-SIGNAL-DEMO",
+  "host": "desktop-mm1rem9",
+  "evidence": [
+    {
+      "evidence_id": "EVID-S001",
+      "source": "edr",
+      "type": "process_create",
+      "timestamp": "2026-08-10T11:04:12Z",
+      "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "command_line": "powershell.exe -EncodedCommand SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkA",
+      "encoded": true
+    },
+    {
+      "evidence_id": "EVID-S002",
+      "source": "edr",
+      "type": "registry_write",
+      "timestamp": "2026-08-10T11:05:47Z",
+      "target_object": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\UpdateSvc",
+      "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    },
+    {
+      "evidence_id": "EVID-S003",
+      "source": "edr",
+      "type": "network_connection",
+      "timestamp": "2026-08-10T11:04:20Z",
+      "destination_ip": "10.0.30.10",
+      "destination_port": 8080,
+      "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    },
+    {
+      "evidence_id": "EVID-S004",
+      "source": "ndr",
+      "type": "http_flow",
+      "timestamp": "2026-08-10T11:04:21Z",
+      "destination_ip": "10.0.30.10",
+      "destination_port": 8080,
+      "http_method": "GET",
+      "uri": "/update.ps1"
+    }
+  ]
+}
