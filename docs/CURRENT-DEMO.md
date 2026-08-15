@@ -8,19 +8,22 @@ This file is updated as remediation work lands. Until the portable demo is compl
 
 ## Status
 
-This section will be filled in as each piece is verified working from a clean clone. Nothing below is claimed until it has actually been tested that way.
+This section is filled in as each piece is verified working from a clean environment. Nothing below is checked until it has actually been tested that way.
 
-- [ ] Elasticsearch runs via Docker Compose and reports healthy status
-- [ ] Kibana runs via Docker Compose and is reachable
-- [ ] Seed data loads and satisfies the API's data contracts
-- [ ] Argus API starts and serves requests
-- [ ] Argus frontend builds cleanly with `npm ci && npm run build`
-- [ ] Argus frontend displays seeded cases correctly
-- [ ] Analyst actions can be recorded and persist after a browser refresh
+- [x] Elasticsearch runs via Docker Compose and reports healthy status
+- [x] Kibana runs via Docker Compose and is reachable
+- [x] Argus API, behavior_detector, case_builder, and frontend run via a single `docker compose up --build`, no manual multi-terminal startup
+- [x] Seed data loads via a deterministic loader (`seed_argus.py`) and produces identical output across repeated runs
+- [x] Argus API starts and serves requests, with Pydantic-validated request and response models on cases, behaviors, and actions endpoints
+- [x] Argus frontend builds cleanly with `npm ci && npm run build`
+- [x] Argus frontend displays seeded cases and behaviors correctly, confirmed through its own `/api` proxy path
+- [x] Analyst actions can be recorded and persist after a refresh, confirmed with a live write-read-refresh cycle including a real `action_id` returned and surfaced
+- [ ] Hunt workbench, process tree, and timeline screens verified against the new seed data
 - [ ] Hermes exists in this repository as real code
 - [ ] Hermes produces a deterministic NOISE decision from a fixture
 - [ ] Hermes produces a deterministic SIGNAL decision from a fixture
-- [ ] A person with no prior context can clone this repo and reach a working demo using only the README
+- [ ] IR-006 raw-events folder backfilled to match IR-002 through IR-005
+- [ ] A person with no prior context can clone this repo and reach a working demo using only the README (clean-room test not yet run)
 
 ## Prerequisites
 
@@ -29,26 +32,46 @@ This section will be filled in as each piece is verified working from a clean cl
 
 ## Quick Start
 
-This section will contain the exact commands to bring up the demo once the Docker Compose setup for Argus and Hermes is complete. Right now, only the Elasticsearch and Kibana stack is confirmed running:
-
 ```powershell
 wsl -d docker-desktop sysctl -w vm.max_map_count=262144
 cd path\to\soc-homelab
-docker compose -f docker/elastic/docker-compose.yml up -d
+docker compose up --build -d
 ```
 
-Confirm Elasticsearch is healthy:
+Confirm all services are healthy:
 
 ```powershell
-docker exec elasticsearch curl -s -u "elastic:<password>" http://localhost:9200/_cluster/health
+docker compose ps
 ```
 
-A healthy response returns JSON with `"status":"green"` or `"status":"yellow"`.
+All six containers (elasticsearch, kibana, argus-api, behavior_detector, case_builder, frontend) should show `Up` with `argus-api` and `elasticsearch` marked `healthy`.
 
-Argus and Hermes startup instructions will be added here once they are containerized and verified from a clean clone.
+Load the seed data:
+
+```powershell
+docker compose run --rm seed
+```
+
+This is safe to run multiple times, it deletes and recreates the demo indices from the source files in `datasets/` each time, and produces identical results on every run.
+
+Confirm the demo is serving real data:
+
+```powershell
+curl http://localhost:8000/api/cases
+curl http://localhost:5173/api/cases
+```
+
+Both should return the same seeded cases. The frontend is reachable at `http://localhost:5173`.
+
+Hermes startup instructions will be added here once it exists and is verified.
+
+## Known Data Notes
+
+The seed loader (`seed_argus.py`) recomputes case metadata from the actual seeded behaviors rather than trusting the stored counts in the original export, which had some integrity issues (a dangling case reference, two cases with stored counts that didn't match zero real behaviors on disk). This is handled automatically and logged when the seeder runs, nothing to do manually.
 
 ## What Is Not Included
 
 - The original two node Proxmox lab. See [HISTORICAL-LAB.md](HISTORICAL-LAB.md).
 - Live attacker or victim VMs. Telemetry in the demo comes from seeded fixture data, not live attack execution.
 - Kali, pfSense, and Windows victim infrastructure. None of this is required to run or evaluate the demo.
+- Hermes. Not yet present in the repository, see CLAIM-INVENTORY.md.
