@@ -49,7 +49,20 @@ Nothing marked CUT should be restated anywhere, README, resume, LinkedIn, or spo
 | Claim | Where stated | Exists today? | Reproducible from repo? | Decision |
 |---|---|---|---|---|
 | IR-001 through IR-005, full kill chain, Defender on throughout | README, Investigation Reports | Yes, reports and raw evidence exist in repo | Evidence-backed, historical simulation | KEEP as historical evidence, PAST TENSE for any live claim |
-| IR-006, complete Argus investigation validated against live telemetry | README, Investigation Reports | Report exists, but evidence depth does not match IR-002 through IR-005 | Partial, raw evidence in IR-006 is thinner than earlier reports | NEEDS REVIEW, trim claims to match actual evidence depth before marking KEEP |
+| IR-006, host discovery and PowerShell HTTP payload retrieval investigated inside Argus, cross-layer corroborated | README, Investigation Reports | Yes, corrected this session | Every remaining claim traces to a specific screenshot, a cross-referenced confirmed number from another section, or is explicitly framed as recommendation rather than finding | KEEP |
+
+**IR-006 correction note:** the report originally claimed a five-stage attack (recon, payload retrieval, blocked LOLBin execution, encoded PowerShell, and persistence via registry run key and scheduled task), with five specific numbers (four PIDs and a connection count) that directly contradicted the report's own attached screenshots. Corrected this session:
+
+- Fixed 5 factual errors where the report text disagreed with its own cited screenshots (whoami.exe, HOSTNAME.EXE, net1.exe, systeminfo.exe PIDs, and the rundll32.exe outbound connection count, which was overstated at 3 when the evidence showed 1)
+- Cut the three unevidenced stages (blocked certutil/AppControl, encoded PowerShell execution, registry Run key and scheduled task persistence), none of which had a screenshot, raw event, or any evidence path, since the raw telemetry only ever lived on the now-decommissioned Node 2 and was never captured to `raw-events/` for this report, unlike IR-002 through IR-005
+- Removed a false footnote claiming raw events existed under `raw-events/`, since that folder was never created for this report
+- Updated the executive summary to explicitly state the report only independently verifies discovery and payload retrieval, and does not confirm what specifically drove the case's own PERSISTENCE classification tag (that tag itself is kept, since it is Argus's own output visible in a screenshot, not a claim this report is making)
+- Dropped T1053.005 (Scheduled Task) from the MITRE list, the only technique tied exclusively to a cut stage
+- Removed a detection gap (AppControl/certutil) that presupposed a now-cut claim as fact, renumbered the remaining gap
+- Left minor environmental description (Kali Linux, python3 http.server, Windows 10 22H2) as-is, these are background context consistent with HISTORICAL-LAB.md, not investigative findings being claimed as confirmed
+- Fixed a minor internal inconsistency where a timeline row implied exact-second precision while its own footnote called the stage "approximate"
+
+The report is now smaller than the original version but every remaining line is independently verifiable from what's in the repository.
 
 ## Datasets
 
@@ -57,21 +70,26 @@ Nothing marked CUT should be restated anywhere, README, resume, LinkedIn, or spo
 |---|---|---|---|---|
 | Seed datasets in `datasets/` are usable demo data | Repository structure | Files exist | Confirmed: a deterministic seed loader (`seed_argus.py`) now loads them, recomputes case metadata from real behavior data rather than trusting stale stored counts, and correctly discards or remaps orphaned records. See note below on data quality issues found | KEEP (loader), see note |
 
-**Data quality note, found during this session:** the original export in `datasets/` had real integrity problems, not just a schema mismatch. One case (CASE-011) referenced in the actions dataset does not exist anywhere in the cases file. Two cases (CASE-002, CASE-003) had stored behavior counts of 51 and 54 but zero real behaviors on disk. Seven of ten seeded analyst actions pointed at these broken references and are now correctly dropped by the loader rather than silently indexed. Three actions had genuine analyst content referencing stale behavior IDs from a since-regenerated index; these were remapped onto real current behaviors rather than discarded. This is now handled correctly by the seeder, but worth knowing the original dataset itself was not clean, this was not purely an API contract problem.
+**Data quality note, found in an earlier session:** the original export in `datasets/` had real integrity problems, not just a schema mismatch. One case (CASE-011) referenced in the actions dataset does not exist anywhere in the cases file. Two cases (CASE-002, CASE-003) had stored behavior counts of 51 and 54 but zero real behaviors on disk. Seven of ten seeded analyst actions pointed at these broken references and are now correctly dropped by the loader rather than silently indexed. Three actions had genuine analyst content referencing stale behavior IDs from a since-regenerated index; these were remapped onto real current behaviors rather than discarded. Note: the dangling CASE-011 action found in this dataset is the same CASE-011 referenced in IR-006, IR-006's own screenshot confirms it as a real historical action, just from an environment that predates the current seed data snapshot, not fabricated data.
 
 ---
 
-## Verified This Session (Pydantic contracts, action_id fix, seed loader)
+## Verified This Session (IR-006 correction)
+
+- Went claim by claim through IR-006 against its 7 screenshots and found 5 factual contradictions plus one silently dropped result row, all corrected
+- Made the judgment call to cut unevidenced stages entirely rather than caveat them, on the reasoning that a caveat next to an unverifiable claim still asks a stranger to trust an assertion the repo can't back, which is the exact pattern this whole remediation exists to fix
+- Ran a full second verification pass after the cuts to confirm no orphaned references remained (MITRE list, detection gaps, environment table all checked and corrected)
+
+## Verified In Prior Session (Pydantic contracts, action_id fix, seed loader)
 
 - Added Pydantic response models to all 5 relevant GET endpoints (Case, Behavior, GroupedBy, BlastRadius, BurstWindow) and a request model (ActionIn) with a Literal type for valid actions, so an invalid action now returns a clean 422 instead of reaching the handler
 - Fixed `action_id` missing from both the POST response and the GET list, confirmed with a live write-read-refresh cycle through the frontend's own proxy
-- Built `seed_argus.py`, a deterministic seed loader verified to produce identical output across repeated runs (an initial nondeterminism bug caused by Elasticsearch's near-real-time indexing was found and fixed mid-session)
+- Built `seed_argus.py`, a deterministic seed loader verified to produce identical output across repeated runs
 - Frontend confirmed serving real seeded case and behavior data through its own `/api` proxy path, not just the API directly
 
 ## Immediate Priorities From This Inventory
 
 1. Verify the remaining Argus screens (hunt workbench, process tree, timeline) against the new seed data, currently unconfirmed since the fix.
-2. Review IR-006 line by line against its raw evidence folder, trim any claim not directly supported. Backfill a `raw-events/` folder matching the pattern of IR-002 through IR-005.
-3. Rebuild Hermes as a minimal, deterministic dry-run producing NOISE and SIGNAL decisions from fixtures, using the CASE-020 Discord output as a reference for expected shape and format.
-4. Once Hermes and IR-006 are done, run the full automated verification pass and a clean-room test (someone with no context, given only the repo URL and README).
-5. Update the README's "What you can run today, now" section to reflect everything now confirmed working.
+2. Rebuild Hermes as a minimal, deterministic dry-run producing NOISE and SIGNAL decisions from fixtures, using the CASE-020 Discord output as a reference for expected shape and format. This is the last major open item.
+3. Once Hermes is done, run the full automated verification pass and a clean-room test (someone with no context, given only the repo URL and README).
+4. Update the README's "What you can run today, now" section to reflect everything now confirmed working.
