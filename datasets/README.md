@@ -1,4 +1,4 @@
-# Replayable Datasets — Argus SOC Homelab
+# Replayable Datasets: Argus SOC Homelab
 
 Sanitized JSON exports from live Elasticsearch telemetry generated during Argus stress test on 2026-05-16.
 
@@ -45,7 +45,7 @@ Sanitized JSON exports from live Elasticsearch telemetry generated during Argus 
 | behaviors-CASE-004-2026-05-16.json | Primary demo case. 251 behaviors, full kill chain, cross-layer corroborated | 251 | 155KB |
 | behaviors-CASE-005-2026-05-16.json | 53 behaviors. EXECUTION + DEFENSE_EVASION + DISCOVERY | 53 | 33KB |
 | behaviors-CASE-006-2026-05-16.json | 52 behaviors. EXECUTION + PERSISTENCE + DISCOVERY | 52 | 32KB |
-| argus-actions-2026-05-16.json | Analyst actions audit trail from investigation session | — | 1.4KB |
+| argus-actions-2026-05-16.json | Analyst actions audit trail from investigation session | N/A | 1.4KB |
 
 ---
 
@@ -55,7 +55,7 @@ CASE-001, CASE-002, and CASE-003 behavior exports are empty or near-empty due to
 
 CASE-004, CASE-005, and CASE-006 were written after the mapping fix and export cleanly.
 
-Suricata EVE (NDR) data is not included in this dataset. The cross-layer corroboration for CASE-004 — 12 Suricata network events independently confirming PowerShell HTTP activity — requires a live pfSense Filebeat pipeline to replay meaningfully and cannot be represented as a static JSON export.
+Suricata EVE (NDR) data is not included in this dataset. The cross-layer corroboration for CASE-004 (12 Suricata network events independently confirming PowerShell HTTP activity) requires a live pfSense Filebeat pipeline to replay meaningfully and cannot be represented as a static JSON export.
 
 ---
 

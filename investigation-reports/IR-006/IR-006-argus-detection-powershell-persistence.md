@@ -7,8 +7,8 @@
 **Severity:** High  
 **Case ID:** CASE-011  
 **Risk Score:** 5,109  
-**Host:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2  
-**Attacker Host:** Kali Linux (10.0.30.10) — HTTP server on port 8080  
+**Host:** DESKTOP-MM1REM9 (10.0.20.10), Windows 10 Pro 22H2  
+**Attacker Host:** Kali Linux (10.0.30.10), HTTP server on port 8080  
 **MITRE ATT&CK:** T1059.001, T1105, T1082, T1016, T1049, T1033  
 **Telemetry Sources:** Sysmon via Elastic Agent (EDR), Suricata via Filebeat (NDR)
 
@@ -18,7 +18,7 @@
 
 On 2026-05-16, a controlled attack simulation was executed on Windows 10 endpoint DESKTOP-MM1REM9. This report covers the two stages with independently verifiable telemetry: host discovery and payload retrieval via PowerShell HTTP.
 
-Upstream Sysmon and Elastic detections were ingested and normalized into a correlated case (CASE-011) containing 26 behaviors across a 30-minute window, classified HIGH severity with a risk score of 5,109 and tagged across three tactic categories: EXECUTION, PERSISTENCE, and DISCOVERY. These figures are the Argus case classification itself (Section 4.1, confirmed directly by screenshot). This report independently walks through and evidences only the discovery and payload-retrieval activity within that case — it does not confirm what specifically drove the PERSISTENCE tag, since no supporting telemetry for later-stage activity is available (see Section 3).
+Upstream Sysmon and Elastic detections were ingested and normalized into a correlated case (CASE-011) containing 26 behaviors across a 30-minute window, classified HIGH severity with a risk score of 5,109 and tagged across three tactic categories: EXECUTION, PERSISTENCE, and DISCOVERY. These figures are the Argus case classification itself (Section 4.1, confirmed directly by screenshot). This report independently walks through and evidences only the discovery and payload-retrieval activity within that case, and does not confirm what specifically drove the PERSISTENCE tag, since no supporting telemetry for later-stage activity is available (see Section 3).
 
 Cross-layer analysis confirmed that 6 Suricata network events from an independent NDR pipeline corroborated EDR-observed PowerShell HTTP activity. Three repeated GET requests to `/payload.txt` on 10.0.30.10:8080 were recorded independently by both sensors. Matching events across both pipelines on the same IPs and timestamps constitutes dual-source confirmation with no shared data path.
 
@@ -82,7 +82,7 @@ The process tree rendered the full execution chain rooted at `powershell.exe` (p
 **Observed process chain:**
 
 ```
-powershell.exe (pid 9160) — C:\Windows\System32\WindowsPowerShell\v1.0\   [EXECUTION]
+powershell.exe (pid 9160) - C:\Windows\System32\WindowsPowerShell\v1.0\   [EXECUTION]
 ├── whoami.exe       (pid 10324)    C:\Windows\system32\                   [DISCOVERY]
 ├── HOSTNAME.EXE     (pid 11056)    C:\Windows\system32\                   [DISCOVERY]
 ├── ipconfig.exe     (pid 10624)    C:\Windows\system32\                   [DISCOVERY]
@@ -128,9 +128,9 @@ Zero Suricata alerts were generated. The 6 events are flow records, not alerts. 
 
 From the cross-layer view, the remote IP `10.0.30.10` was used as a pivot to the hunt workbench. HT-03 (Outbound connections by process) was pre-filled and executed against the case time window.
 
-![Hunt Workbench — HT-03 pivot on 10.0.30.10](screenshots/IR-006-ARGUS-hunt-workbench.png)
+![Hunt Workbench, HT-03 pivot on 10.0.30.10](screenshots/IR-006-ARGUS-hunt-workbench.png)
 
-**Hunt template:** HT-03 — Outbound connections by process  
+**Hunt template:** HT-03: Outbound connections by process  
 **Pivot source:** 10.0.30.10 from cross-layer network evidence
 
 **Results (7 processes with outbound connections on DESKTOP-MM1REM9):**
@@ -155,7 +155,7 @@ From the cross-layer view, the remote IP `10.0.30.10` was used as a pivot to the
 
 An ESCALATE action was logged against CASE-011 following the investigation.
 
-![Actions Log — CASE-011 ESCALATE](screenshots/IR-006-ARGUS-actions-log.png)
+![Actions Log, CASE-011 ESCALATE](screenshots/IR-006-ARGUS-actions-log.png)
 
 | Field | Value |
 |---|---|
@@ -184,7 +184,7 @@ An ESCALATE action was logged against CASE-011 following the investigation.
 | 07:37:xx | Suricata NDR | fileinfo | payload.txt transfer recorded | n/a | T1105 |
 | 12:37:09 | Argus | n/a | Analyst logs ESCALATE on CASE-011 | n/a | n/a |
 
-Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approximate, based on the behavior timeline strip in the Argus process-tree screenshots. No raw Sysmon EID 1 export exists for this case to confirm exact values — unlike IR-002 through IR-005, this report currently has no `raw-events/` folder.
+Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approximate, based on the behavior timeline strip in the Argus process-tree screenshots. No raw Sysmon EID 1 export exists for this case to confirm exact values, unlike IR-002 through IR-005, this report currently has no `raw-events/` folder.
 
 ---
 
@@ -211,7 +211,7 @@ This was a controlled simulation. The following actions apply if the activity we
 - Review outbound connections to 10.0.30.10 across the environment for additional affected hosts
 - Validate no secondary payload was executed following the 3x retrieval
 - Reset credentials for the active user session if privilege context is uncertain
-- Independently verify persistence mechanisms (scheduled tasks, registry run keys) — this investigation did not check for them, so their presence or absence is unconfirmed, not ruled out
+- Independently verify persistence mechanisms (scheduled tasks, registry run keys); this investigation did not check for them, so their presence or absence is unconfirmed, not ruled out
 
 ---
 

@@ -68,7 +68,7 @@ Proactive detection via NDR alert, correlated with EDR telemetry.
 Out of scope. Assumed via existing elevated session (IntegrityLevel: High confirmed on all recon processes).
 
 **First observed activity:**
-2026-04-02T14:41:40 — Suricata SID 9000001 fires on Nmap SYN scan from 10.0.30.10 targeting 10.0.20.10 ports 1-1000.
+2026-04-02T14:41:40: Suricata SID 9000001 fires on Nmap SYN scan from 10.0.30.10 targeting 10.0.20.10 ports 1-1000.
 
 **External reconnaissance:**
 Two Nmap scans executed from Kali (10.0.30.10): SYN scan (-sS, ports 1-1000) and connect scan (-sT, ports 22/80/443/445/3389). NDR generated 26 alert records across both scans.

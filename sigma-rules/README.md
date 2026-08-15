@@ -1,4 +1,4 @@
-# Sigma Rules — Argus SOC Homelab
+# Sigma Rules: Argus SOC Homelab
 
 12 Sigma detection rules derived from live attack telemetry generated during Argus stress testing on 2026-05-16. All rules are based on actual command lines and process chains observed in Elasticsearch across 6 cases (CASE-001 through CASE-006) formed by the Argus behavioral detection engine.
 
@@ -49,8 +49,8 @@ These rules use standard Sigma log source categories. For this homelab the mappi
 ## Notes
 
 - Rules marked `status: test` have been validated against homelab telemetry but not production-hardened
-- False positive sections reflect observed environment — tune filters for your environment before production use
-- Rule 12 (chain correlation) requires timeframe correlation in your SIEM to be fully effective — standalone it detects individual child process patterns
+- False positive sections reflect observed environment, tune filters for your environment before production use
+- Rule 12 (chain correlation) requires timeframe correlation in your SIEM to be fully effective, standalone it detects individual child process patterns
 - All rules follow [Sigma specification](https://github.com/SigmaHQ/sigma)
 
 ---

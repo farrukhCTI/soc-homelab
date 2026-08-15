@@ -69,10 +69,10 @@ All nine recon binaries share ParentProcessGuid `{c466df0a-c199-69cc-5006-000000
 Note: `*-enc*` wildcard returns empty on this Elastic build due to field tokenization. `*hidden*` is the confirmed working detection query. The 79-minute gap between recon (14:52) and execution (16:11) reflects dwell time consistent with operator planning between phases.
 
 #### Stage 4: C2 Beaconing (16:31 - 16:47)
-**Source (EDR):** Sysmon EID 3 — `agent.name: "DESKTOP-MM1REM9" AND event.code: "3" AND winlog.event_data.DestinationIp: "10.0.30.10"`
+**Source (EDR):** Sysmon EID 3: `agent.name: "DESKTOP-MM1REM9" AND event.code: "3" AND winlog.event_data.DestinationIp: "10.0.30.10"`
 **Result:** 23 EID 3 events, DestinationPort: 8080, consistent 25-45 second jitter.
 
-**Source (NDR):** Suricata HTTP flows — `src_ip: "10.0.20.10" AND http.http_method: GET`
+**Source (NDR):** Suricata HTTP flows: `src_ip: "10.0.20.10" AND http.http_method: GET`
 **Result:** 23 HTTP GET records, dest: 10.0.30.10:8080, User-Agent: Mozilla/5.0.
 
 **Cross-layer match:** 23 EID 3 events (EDR) and 23 HTTP GET records (NDR) with matching source/destination IPs and overlapping timestamps. This is the cross-layer smoking gun: the same C2 channel independently confirmed by two separate detection systems with no coordination between them.

@@ -1,8 +1,8 @@
 # Argus: SOC Investigation Console
 
-Argus is a behavior-driven SOC investigation console built on top of Elasticsearch. It sits over two live telemetry pipelines: Sysmon (EDR) and Suricata (NDR), and converts raw endpoint events into structured, MITRE-mapped cases that an analyst can investigate without ever touching Kibana.
+Argus is a behavior-driven SOC investigation console built on top of Elasticsearch. It was originally built against two live telemetry pipelines, Sysmon (EDR) and Suricata (NDR), running on the two-node homelab documented in the main README, and converts raw endpoint events into structured, MITRE-mapped cases that an analyst can investigate without ever touching Kibana.
 
-It runs on the same two-node homelab documented in the main README. No cloud. No SaaS. Two old Dell boxes.
+That two-node homelab has since been decommissioned, see [HISTORICAL-LAB.md](../docs/HISTORICAL-LAB.md). Argus itself is portable: it runs today via Docker Compose against seeded demo data, no cloud, no SaaS, just this repository. See the top-level [README](../README.md#what-you-can-run-today-now) for the exact commands.
 
 ---
 
@@ -154,6 +154,8 @@ Case closure is handled via three states in the Actions tab: RESOLVED, CONFIRMED
 
 ## Architecture
 
+The top two columns (Windows Victim through Elasticsearch, pfSense through Elasticsearch) are the original telemetry collection setup, decommissioned along with the two-node homelab (see [HISTORICAL-LAB.md](../docs/HISTORICAL-LAB.md)). Everything from `behavior_detector.py` downward is Argus's own pipeline, which runs today via Docker Compose against seeded data in place of that live collection.
+
 ```
 Windows 10 Victim (10.0.20.10)          pfSense OPT1
   Sysmon EID 1/3/10/11/13                 Suricata IDS
@@ -222,9 +224,9 @@ Detection, scoring, and case formation are fully deterministic. Claude never con
 
 ---
 
-## Validated against live telemetry
+## Validated against real telemetry
 
-IR-006 documents a complete investigation conducted inside Argus against CASE-011, a live case formed from a controlled five-stage attack scenario executed on 2026-05-16. The investigation covered:
+IR-006 documents an investigation conducted inside Argus against CASE-011, covering the two stages with independently verifiable telemetry: host discovery and PowerShell-based payload retrieval, executed on 2026-05-16. Earlier drafts of this report also described later-stage activity (encoded execution, persistence); those claims had no supporting evidence and were removed during this remediation, see `investigation-reports/IR-006/` and `docs/CLAIM-INVENTORY.md`. What remains is confirmed:
 
 - Case triage (26 behaviors, risk 5,109, HIGH severity)
 - Process tree analysis (powershell.exe root, full discovery chain)

@@ -1,4 +1,4 @@
-*-enc* wildcard returns empty — field indexing issue.
+*-enc* wildcard returns empty, field indexing issue.
 Use *hidden* as the working query for encoded PS detection.
 
 IR-003 START: 16:11
