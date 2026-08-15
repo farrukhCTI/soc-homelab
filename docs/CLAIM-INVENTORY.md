@@ -31,9 +31,18 @@ Nothing marked CUT should be restated anywhere, README, resume, LinkedIn, or spo
 
 | Claim | Where stated | Exists today? | Reproducible from repo? | Decision |
 |---|---|---|---|---|
-| Hermes classifies NOISE vs SIGNAL | README references, prior pitch language, resume | No, code was never committed and did not survive the Node 2 wipe | No | CUT until BUILD is complete, then KEEP |
-| Discord integration for querying Elasticsearch and Argus | Prior pitch language, LinkedIn | No, ran only on Node 2, not in repo | No | CUT |
-| Sample Hermes output (CASE-020 analysis, Sigma rule generation) | Discord chat log | Yes, saved as reference | Not reproducible, output only, no source | PAST TENSE, store under `hermes/legacy-output-examples/` |
+| Hermes classifies NOISE vs SIGNAL | README references, prior pitch language, resume | Yes, rebuilt from scratch this session under `hermes/` | Yes: `python -m hermes.cli dry-run --scenario noise` and `--scenario signal` produce deterministic, evidence-cited decisions from fixture data. No LLM in the decision path, no external dependency. Verified with two runs of each scenario, byte-for-byte identical output | KEEP |
+| Discord integration for querying Elasticsearch and Argus | Prior pitch language, LinkedIn | No, the original ran only on Node 2 and never entered this repo; the rebuild deliberately has no Discord dependency at all | No | CUT |
+| Sample Hermes output (CASE-020 analysis, Sigma rule generation, threat hunting queries) | Discord chat log, `docs/HISTORICAL-LAB.md` reference | Yes, `hermes/legacy-output-examples/CASE-020-discord-output.md` now exists, containing the saved Discord output | Yes, readable as a static reference document. Not reproducible, it's a transcript, not code, and is explicitly marked as such | PAST TENSE, output only, no source, KEEP as reference material |
+
+**Hermes rebuild note:** the original Hermes never made it into this repository and did not survive the Node 2 wipe, so this is a full rebuild, not a recovery. There was no legacy source to work from, only the Discord log's description of past output shape, and even that file (`hermes/legacy-output-examples/`) turned out not to actually exist in the repo when checked. Built this session:
+
+- `hermes/state_manager.py`, `workflow_base.py`, `dispatcher.py`, `reporting.py`, `cli.py`, and two fixtures (`noise.json`, `signal.json`), all new code
+- Decision rule is plain conditional logic in `dispatcher.py`: two or more independently-fired signal categories (encoded execution, persistence, EDR+NDR network corroboration) yields SIGNAL, fewer yields NOISE. No LLM call anywhere in the decision path
+- `StateManager.add_reason()` enforces the evidence-citation rule at runtime: a workflow citing an `evidence_id` not present in that run's evidence raises, rather than relying on convention
+- Verified determinism the same way the seed loader was verified: ran both scenarios twice each and diffed the output, byte-identical both times
+- Verified no external dependency: grepped the whole package for Discord, Kali, pfSense, WinRM, and any network-calling code; the only match was a docstring explaining why it doesn't need Discord
+- Runs entirely from the package: `python -m hermes.cli dry-run --scenario noise`, no bot process, no server, no token
 
 ## Infrastructure
 
@@ -74,6 +83,13 @@ The report is now smaller than the original version but every remaining line is 
 
 ---
 
+## Verified This Session (Hermes rebuild)
+
+- Confirmed no legacy Hermes source or `hermes/legacy-output-examples/` exists anywhere in the repository before starting, so this was built as new code, not recovered
+- Built the full `hermes/` package to the required structure: dispatcher, workflow base, state manager, reporting, CLI, and two fixtures
+- Verified determinism (two runs per scenario, byte-identical diff) and zero external dependency (grepped for Discord/Kali/pfSense/WinRM/network calls)
+- Found the HISTORICAL-LAB.md reference to `hermes/legacy-output-examples/` pointed at a path that didn't exist, logged it, then closed it out: `hermes/legacy-output-examples/CASE-020-discord-output.md` now contains the actual saved Discord transcript, with a header marking it historical, not reproducible, no source code for the agent that produced it
+
 ## Verified This Session (IR-006 correction)
 
 - Went claim by claim through IR-006 against its 7 screenshots and found 5 factual contradictions plus one silently dropped result row, all corrected
@@ -90,6 +106,5 @@ The report is now smaller than the original version but every remaining line is 
 ## Immediate Priorities From This Inventory
 
 1. Verify the remaining Argus screens (hunt workbench, process tree, timeline) against the new seed data, currently unconfirmed since the fix.
-2. Rebuild Hermes as a minimal, deterministic dry-run producing NOISE and SIGNAL decisions from fixtures, using the CASE-020 Discord output as a reference for expected shape and format. This is the last major open item.
-3. Once Hermes is done, run the full automated verification pass and a clean-room test (someone with no context, given only the repo URL and README).
-4. Update the README's "What you can run today, now" section to reflect everything now confirmed working.
+2. Run the full automated verification pass and a clean-room test (someone with no context, given only the repo URL and README).
+3. Update the README's "What you can run today, now" section to reflect everything now confirmed working, including Hermes.
