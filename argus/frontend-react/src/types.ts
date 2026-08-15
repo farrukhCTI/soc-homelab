@@ -67,7 +67,8 @@ export interface Action {
   action_id?: string
   behavior_id?: string
   case_id?: string
-  action: 'ESCALATE' | 'BLOCK_IP' | 'NOTE' | 'RESOLVED' | 'CONFIRMED_MALICIOUS' | 'FALSE_POSITIVE'
+  // T1-3: HUNT_PIVOT added — logged automatically on pivot arrival in HuntWorkbench
+  action: 'ESCALATE' | 'BLOCK_IP' | 'NOTE' | 'RESOLVED' | 'CONFIRMED_MALICIOUS' | 'FALSE_POSITIVE' | 'HUNT_PIVOT'
   note?: string
   actor: string
   timestamp: string

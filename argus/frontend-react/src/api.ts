@@ -24,8 +24,10 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 export const fetchCases = () =>
   get<{ ok: true; cases: Case[] }>('/cases').then(d => d.cases)
 
+// T1-1: Returns full response including burst_windows — do not unwrap to .behaviors here.
+// Investigation.tsx accesses both d.behaviors and d.burst_windows.
 export const fetchCaseBehaviors = (caseId: string) =>
-  get<{ ok: true; behaviors: Behavior[] }>(`/cases/${caseId}/behaviors`).then(d => d.behaviors)
+  get<{ ok: true; behaviors: Behavior[]; burst_windows: { count: number; span_seconds: number; start_ts: string; end_ts: string }[] }>(`/cases/${caseId}/behaviors`)
 
 export const fetchCaseSummary = (caseId: string) =>
   get<{ ok: true; summary: string }>(`/cases/${caseId}/summary`).then(d => d.summary)
@@ -46,8 +48,10 @@ export const generateBriefing = (behaviorId: string) =>
 // FIX-05: Centralised network context fetch — single source of truth.
 // Previously duplicated in RightRail.tsx and CrossLayerTab.tsx.
 // Throws on non-ok response so callers can handle errors consistently.
-export async function fetchNetworkContext(behaviorId: string) {
-  const res = await fetch(`/api/behaviors/${behaviorId}/network_context`)
+// S-2: window_minutes param (default 15, max 60) — passed to backend query param.
+export async function fetchNetworkContext(behaviorId: string, windowMinutes: number = 15) {
+  const mins = Math.max(1, Math.min(60, windowMinutes))
+  const res = await fetch(`/api/behaviors/${behaviorId}/network_context?window_minutes=${mins}`)
   if (!res.ok) throw new Error(`network_context fetch failed: ${res.status}`)
   return res.json()
 }

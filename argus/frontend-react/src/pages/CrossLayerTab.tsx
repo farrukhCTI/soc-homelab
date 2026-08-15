@@ -95,6 +95,8 @@ function isOutbound(e: NetworkEvent, victimIp: string | null): boolean {
 
 const COLOR = {
   teal:    "var(--teal)",
+  grn:     "var(--grn)",
+  blue:    "var(--blue)",
   ndr:     "#7b6dd4",
   alert:   "var(--red)",
   suspect: "#e8903a",
@@ -152,8 +154,8 @@ function PivotEntity({ value, templateId, params, label, sourceCase, style }: Pi
       style={{
         cursor: "crosshair",
         fontFamily: "var(--mono)",
-        borderBottom: hovered ? "1px solid var(--teal)" : "1px solid transparent",
-        color: hovered ? "var(--teal)" : undefined,
+        borderBottom: hovered ? "1px solid var(--blue)" : "1px solid transparent",
+        color: hovered ? "var(--blue)" : undefined,
         transition: "color 0.1s, border-color 0.1s",
         ...style,
       }}
@@ -161,7 +163,7 @@ function PivotEntity({ value, templateId, params, label, sourceCase, style }: Pi
       {value}
       {hovered && (
         <span style={{
-          fontSize: 7, marginLeft: 4, color: "var(--teal)",
+          fontSize: 7, marginLeft: 4, color: "var(--blue)",
           fontFamily: "var(--mono)", opacity: 0.8,
           verticalAlign: "middle",
         }}>⤷ hunt</span>
@@ -263,8 +265,7 @@ interface Assessment {
 
 function buildAssessment(
   networkEvents: NetworkEvent[],
-  alerts: AlertEvent[],
-  behavior: BehaviorContext
+  alerts: AlertEvent[]
 ): Assessment {
   const httpEvents = networkEvents.filter(e => e.event_type === "http")
   const uas = [...new Set(networkEvents.map(e => e.user_agent).filter(Boolean))]
@@ -359,7 +360,7 @@ function CorroborationBanner({ data }: { data: NetworkContextResponse }) {
             <span style={{ color: "var(--t1)" }}>{victimIp}</span></>
           )}
           {!victimIp && <>{" Suricata alerts"}</>}
-          <span style={{ color: "var(--t4)", margin: "0 6px" }}>→</span>
+          <span style={{ color: "var(--t3)", margin: "0 6px" }}>→</span>
           <PivotEntity
             value={`${remoteIp}:${remotePort}`}
             templateId="HT-03"
@@ -369,7 +370,7 @@ function CorroborationBanner({ data }: { data: NetworkContextResponse }) {
           />
         </div>
       </div>
-      <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", textAlign: "right", flexShrink: 0, paddingTop: 3 }}>
+      <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", textAlign: "right", flexShrink: 0, paddingTop: 3 }}>
         <div>±15 min window</div>
         <div style={{ marginTop: 2 }}>{fmtTs(data.window.start)} → {fmtTs(data.window.end)}</div>
       </div>
@@ -388,7 +389,7 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
       background: "var(--bg0)",
     }}>
       <div style={{
-        fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)",
+        fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
         letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 14,
       }}>
         Attack Progression
@@ -435,7 +436,7 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
 
                 {/* Detail */}
                 <div style={{
-                  fontSize: 9, fontFamily: "var(--mono)", color: "var(--t2)",
+                  fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                   marginBottom: node.subdetail ? 3 : 0,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
@@ -445,12 +446,12 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
                       templateId="HT-02"
                       params={{ host: "desktop-mm1rem9", hours: 24 }}
                       label={`Encoded PowerShell — ${node.detail}`}
-                      style={{ fontSize: 9, color: "var(--t2)" }}
+                      style={{ fontSize: 10, color: "var(--t2)" }}
                     />
                   ) : node.detail}
                   {node.count && node.count > 1 && (
                     <span style={{
-                      marginLeft: 6, fontSize: 8,
+                      marginLeft: 6, fontSize: 10,
                       background: `${node.color}22`,
                       color: node.color,
                       border: `1px solid ${node.color}44`,
@@ -462,7 +463,7 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
                 {/* Subdetail */}
                 {node.subdetail && (
                   <div style={{
-                    fontSize: 8, fontFamily: "var(--mono)", color: COLOR.suspect,
+                    fontSize: 10, fontFamily: "var(--mono)", color: COLOR.suspect,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>
                     {node.subdetail}
@@ -471,12 +472,12 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
 
                 {/* Timestamp */}
                 <div style={{
-                  fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)",
+                  fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                   marginTop: 8,
                 }}>
                   {fmtTs(node.timestamp)}
                   {node.spanMs && node.spanMs > 0 && (
-                    <span style={{ color: "var(--t4)", marginLeft: 6 }}>
+                    <span style={{ color: "var(--t3)", marginLeft: 6 }}>
                       over {(node.spanMs / 1000).toFixed(0)}s
                     </span>
                   )}
@@ -515,7 +516,7 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
                       background: "var(--bg2)",
                       border: "1px solid var(--ln)",
                       borderRadius: 2, padding: "2px 5px",
-                      fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                      fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                     }}>
                       {Math.abs(deltaS) < 60
                         ? `${Math.abs(deltaS).toFixed(0)}s`
@@ -536,9 +537,9 @@ function AttackChain({ nodes }: { nodes: ChainNode[] }) {
 
 function AnalystAssessment({ assessment }: { assessment: Assessment }) {
   const confColor = assessment.confidence === "High"
-    ? "var(--teal)"
+    ? "var(--grn)"     // grn = confirmed/high confidence
     : assessment.confidence === "Medium"
-    ? "#c9b03a"
+    ? "var(--amb)"     // amb = caution/medium confidence
     : "var(--t3)"
 
   return (
@@ -549,7 +550,7 @@ function AnalystAssessment({ assessment }: { assessment: Assessment }) {
       flexShrink: 0,
     }}>
       <div style={{
-        fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)",
+        fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
         letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12,
       }}>
         Analyst Assessment
@@ -557,7 +558,7 @@ function AnalystAssessment({ assessment }: { assessment: Assessment }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "7px 12px", alignItems: "baseline" }}>
         {/* Finding */}
-        <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           Finding
         </div>
         <div style={{ fontSize: 11, color: "var(--t1)", fontWeight: 600, lineHeight: 1.4 }}>
@@ -565,7 +566,7 @@ function AnalystAssessment({ assessment }: { assessment: Assessment }) {
         </div>
 
         {/* Implication */}
-        <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           Implication
         </div>
         <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.5 }}>
@@ -573,14 +574,14 @@ function AnalystAssessment({ assessment }: { assessment: Assessment }) {
         </div>
 
         {/* Confidence */}
-        <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
           Confidence
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
           <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: confColor, fontWeight: 700 }}>
             {assessment.confidence}
           </span>
-          <span style={{ fontSize: 9, color: "var(--t3)", lineHeight: 1.5 }}>
+          <span style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.5 }}>
             {assessment.confidenceReason}
           </span>
         </div>
@@ -594,7 +595,7 @@ function AnalystAssessment({ assessment }: { assessment: Assessment }) {
 
 function AggregatedEventGroup({
   events,
-  alerts,
+  alerts: _alerts,
   expanded,
   onToggle,
 }: {
@@ -645,14 +646,14 @@ function AggregatedEventGroup({
           </span>
           <span style={{
             fontSize: 10, fontFamily: "var(--mono)", fontWeight: 700,
-            color: statuses.includes(200) ? COLOR.teal : COLOR.alert,
+            color: statuses.includes(200) ? COLOR.grn : COLOR.alert,
           }}>
             {statuses.join(", ") || "?"}
           </span>
         </div>
 
         {/* Summary row */}
-        <div style={{ fontSize: 9, color: "var(--t2)", lineHeight: 1.7 }}>
+        <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.7 }}>
           <span style={{ color: "var(--t1)", fontWeight: 600 }}>{httpEvents.length}</span>
           {" successful request"}
           {httpEvents.length > 1 ? "s" : ""}
@@ -664,7 +665,7 @@ function AggregatedEventGroup({
         {/* UA row — flagged */}
         {isPowerShell && ua && (
           <div style={{
-            marginTop: 5, fontSize: 8, fontFamily: "var(--mono)",
+            marginTop: 5, fontSize: 10, fontFamily: "var(--mono)",
             color: COLOR.suspect,
             padding: "2px 6px",
             background: `${COLOR.suspect}0d`,
@@ -677,14 +678,14 @@ function AggregatedEventGroup({
         )}
 
         {/* Expand toggle */}
-        <div style={{ marginTop: 6, fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)" }}>
+        <div style={{ marginTop: 6, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
           {/* Richness summary before toggle */}
         {!expanded && firstTs && lastTs && (
-          <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", marginTop: 4 }}>
+          <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", marginTop: 4 }}>
             {fmtTs(firstTs)} → {fmtTs(lastTs)}
           </div>
         )}
-        <div style={{ marginTop: 5, fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)" }}>
+        <div style={{ marginTop: 5, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
           {expanded ? "▴ collapse raw telemetry" : `▾ inspect ${events.length} raw events`}
         </div>
         </div>
@@ -706,13 +707,13 @@ function AggregatedEventGroup({
             }}>
               <span style={{
                 fontSize: 7, fontFamily: "var(--mono)", padding: "1px 4px", borderRadius: 2,
-                background: "var(--bg2)", color: "var(--t4)", border: "1px solid var(--ln)",
+                background: "var(--bg2)", color: "var(--t3)", border: "1px solid var(--ln)",
                 textTransform: "uppercase", flexShrink: 0,
               }}>{e.event_type}</span>
-              <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)", flex: 1 }}>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", flex: 1 }}>
                 {e.src_ip}:{e.src_port} → {e.dest_ip}:{e.dest_port}
               </span>
-              <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", flexShrink: 0 }}>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", flexShrink: 0 }}>
                 {fmtTsMs(e.timestamp)}
               </span>
             </div>
@@ -739,12 +740,12 @@ function AlertCard({ alert }: { alert: AlertEvent }) {
           background: `${col}18`, color: col, border: `1px solid ${col}33`,
           textTransform: "uppercase", flexShrink: 0,
         }}>{severityLabel(alert.severity)}</span>
-        <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)" }}>sid:{alert.signature_id}</span>
-        <span style={{ fontSize: 9, color: "var(--t2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>sid:{alert.signature_id}</span>
+        <span style={{ fontSize: 10, color: "var(--t2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {alert.signature}
         </span>
       </div>
-      <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)", display: "flex", gap: 6 }}>
+      <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", display: "flex", gap: 6 }}>
         <span>{alert.src_ip}:{alert.src_port} → {alert.dest_ip}:{alert.dest_port}</span>
         <span style={{ marginLeft: "auto" }}>{fmtTsMs(alert.timestamp)}</span>
       </div>
@@ -754,7 +755,7 @@ function AlertCard({ alert }: { alert: AlertEvent }) {
 
 // ─── Intel sidebar ────────────────────────────────────────────────────────────
 
-function IntelPanel({ networkEvents, alerts, summary, behavior }: {
+function IntelPanel({ networkEvents, alerts, summary, behavior: _behavior }: {
   networkEvents: NetworkEvent[]
   alerts: AlertEvent[]
   summary: NetworkContextResponse["summary"]
@@ -780,8 +781,8 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
   const Section = ({ title, accent, children }: { title: string; accent?: string; children: React.ReactNode }) => (
     <div>
       <div style={{
-        fontSize: 8, fontFamily: "var(--mono)",
-        color: accent || "var(--t4)",
+        fontSize: 10, fontFamily: "var(--mono)",
+        color: accent || "var(--t2)",
         letterSpacing: "0.1em", textTransform: "uppercase",
         padding: "8px 14px 6px",
         borderBottom: `1px solid ${accent ? accent + "22" : "var(--ln)"}`,
@@ -793,9 +794,9 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
 
   const Row = ({ label, value, accent }: { label: string; value: string; accent?: boolean }) => (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 5 }}>
-      <span style={{ fontSize: 9, color: "var(--t4)", flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 10, color: "var(--t2)", flexShrink: 0 }}>{label}</span>
       <span style={{
-        fontSize: 9, fontFamily: "var(--mono)",
+        fontSize: 10, fontFamily: "var(--mono)",
         color: accent ? COLOR.teal : "var(--t2)",
         textAlign: "right", wordBreak: "break-all",
       }}>{value}</span>
@@ -814,13 +815,13 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
         {pivots.slice(0, 4).map((p, i) => (
           <div key={i} style={{ display: "flex", gap: 7, marginBottom: 9, alignItems: "flex-start" }}>
             <span style={{
-              color: i === 0 ? "var(--teal)" : "var(--t4)",
-              fontSize: 9, flexShrink: 0, fontFamily: "var(--mono)",
+              color: i === 0 ? "var(--blue)" : "var(--t3)",
+              fontSize: 10, flexShrink: 0, fontFamily: "var(--mono)",
               fontWeight: i === 0 ? 700 : 400,
             }}>{i + 1}.</span>
             <span style={{
-              fontSize: i === 0 ? 10 : 9,
-              color: i === 0 ? "var(--t1)" : "var(--t3)",
+              fontSize: 10,
+              color: i === 0 ? "var(--t1)" : "var(--t2)",
               lineHeight: 1.6,
               fontWeight: i === 0 ? 500 : 400,
             }}>{p}</span>
@@ -835,22 +836,22 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
           <Section title="HTTP Indicators">
             {urls.slice(0, 3).map(url => (
               <div key={url} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 5 }}>
-                <span style={{ fontSize: 9, color: "var(--t4)", flexShrink: 0 }}>URI</span>
+                <span style={{ fontSize: 10, color: "var(--t2)", flexShrink: 0 }}>URI</span>
                 <PivotEntity
                   value={url!}
                   templateId="HT-03"
                   params={{ host: "desktop-mm1rem9", hours: 48, exclude_local: false }}
                   label={`Outbound connections — ${url}`}
-                  style={{ fontSize: 9, color: "var(--t2)" }}
+                  style={{ fontSize: 10, color: "var(--t2)" }}
                 />
               </div>
             ))}
             {statuses.length > 0 && <Row label="Status" value={statuses.join(", ")} />}
             {uas.slice(0, 1).map((ua, i) => (
               <div key={i}>
-                <div style={{ fontSize: 8, color: "var(--t4)", marginBottom: 3 }}>User-Agent</div>
+                <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 3 }}>User-Agent</div>
                 <div style={{
-                  fontSize: 8, fontFamily: "var(--mono)",
+                  fontSize: 10, fontFamily: "var(--mono)",
                   color: isPowerShell ? COLOR.suspect : "var(--t2)",
                   wordBreak: "break-all", lineHeight: 1.5,
                   padding: isPowerShell ? "3px 6px" : undefined,
@@ -868,13 +869,13 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
       <Section title="Remote Infrastructure">
         {remoteIps.map(ip => (
           <div key={ip} style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 5 }}>
-            <span style={{ fontSize: 9, color: "var(--t4)", flexShrink: 0 }}>IP</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", flexShrink: 0 }}>IP</span>
             <PivotEntity
               value={ip}
               templateId="HT-03"
               params={{ host: "desktop-mm1rem9", hours: 48, exclude_local: false }}
               label={`Outbound connections to ${ip}`}
-              style={{ fontSize: 9, color: "var(--teal)" }}
+              style={{ fontSize: 10, color: "var(--blue)" }}
             />
           </div>
         ))}
@@ -897,9 +898,9 @@ function IntelPanel({ networkEvents, alerts, summary, behavior }: {
                     border: `1px solid ${severityColor(a.severity)}33`,
                     fontFamily: "var(--mono)",
                   }}>{severityLabel(a.severity)}</div>
-                  <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t4)" }}>sid:{a.signature_id}</span>
+                  <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>sid:{a.signature_id}</span>
                 </div>
-                <div style={{ fontSize: 8, color: "var(--t2)", lineHeight: 1.5 }}>{a.signature}</div>
+                <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.5 }}>{a.signature}</div>
               </div>
             ))}
           </Section>
@@ -924,13 +925,13 @@ function EmptyState({ window: win }: { window: { start: string; end: string } })
         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
           No Network Corroboration
         </div>
-        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
           Suricata queried · window {fmtTs(win.start)} → {fmtTs(win.end)} · 0 events matched
         </div>
       </div>
 
       <div style={{ flex: 1, padding: "20px 24px", overflow: "auto" }}>
-        <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+        <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
           Investigation Notes
         </div>
         {[
@@ -939,12 +940,12 @@ function EmptyState({ window: win }: { window: { start: string; end: string } })
           { label: "Filter",          value: "src_ip OR dest_ip = victim host" },
         ].map(({ label, value }) => (
           <div key={label} style={{ display: "flex", gap: 12, marginBottom: 7 }}>
-            <span style={{ fontSize: 9, color: "var(--t4)", flexShrink: 0, width: 110 }}>{label}</span>
-            <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t2)" }}>{value}</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", flexShrink: 0, width: 110 }}>{label}</span>
+            <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>{value}</span>
           </div>
         ))}
 
-        <div style={{ marginTop: 18, marginBottom: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+        <div style={{ marginTop: 18, marginBottom: 10, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
           Possible Reasons
         </div>
         {[
@@ -954,12 +955,12 @@ function EmptyState({ window: win }: { window: { start: string; end: string } })
           "Try selecting a later behavior that may be closer to network activity",
         ].map((r, i) => (
           <div key={i} style={{ display: "flex", gap: 7, marginBottom: 7 }}>
-            <span style={{ color: "var(--t4)", fontSize: 9, flexShrink: 0 }}>·</span>
-            <span style={{ fontSize: 9, color: "var(--t3)", lineHeight: 1.6 }}>{r}</span>
+            <span style={{ color: "var(--t2)", fontSize: 10, flexShrink: 0 }}>·</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.6 }}>{r}</span>
           </div>
         ))}
 
-        <div style={{ marginTop: 18, marginBottom: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+        <div style={{ marginTop: 18, marginBottom: 10, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
           Suggested Pivots
         </div>
         {[
@@ -968,8 +969,8 @@ function EmptyState({ window: win }: { window: { start: string; end: string } })
           "Open Kibana NDR dashboard and search manually around this timeframe",
         ].map((p, i) => (
           <div key={i} style={{ display: "flex", gap: 7, marginBottom: 7 }}>
-            <span style={{ color: COLOR.teal, fontSize: 9, flexShrink: 0 }}>›</span>
-            <span style={{ fontSize: 9, color: "var(--t3)", lineHeight: 1.6 }}>{p}</span>
+            <span style={{ color: COLOR.blue, fontSize: 10, flexShrink: 0 }}>›</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.6 }}>{p}</span>
           </div>
         ))}
       </div>
@@ -985,12 +986,14 @@ interface CrossLayerTabProps {
   behavior?: BehaviorContext
 }
 
-export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: CrossLayerTabProps) {
+export default function CrossLayerTab({ behaviorId, behaviorTs: _behaviorTs, behavior }: CrossLayerTabProps) {
   const [eventsExpanded, setEventsExpanded] = useState(false)
+  // S-2: analyst-controlled correlation window — default 15min, options 15/30/60
+  const [windowMinutes, setWindowMinutes] = useState(15)
 
   const { data, isLoading, isError } = useQuery<NetworkContextResponse>({
-    queryKey: ["network_context", behaviorId],
-    queryFn: () => fetchNetworkContext(behaviorId),
+    queryKey: ["network_context", behaviorId, windowMinutes],  // S-2: refetch on window change
+    queryFn: () => fetchNetworkContext(behaviorId, windowMinutes),
     enabled: !!behaviorId,
     staleTime: 60000,
   })
@@ -999,7 +1002,7 @@ export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: Cros
     return (
       <div style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--t3)", fontSize: 10, fontFamily: "var(--mono)", background: "var(--bg0)",
+        color: "var(--t2)", fontSize: 10, fontFamily: "var(--mono)", background: "var(--bg0)",
       }}>
         querying suricata telemetry…
       </div>
@@ -1010,7 +1013,7 @@ export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: Cros
     return (
       <div style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--t3)", fontSize: 10, fontFamily: "var(--mono)", background: "var(--bg0)",
+        color: "var(--t2)", fontSize: 10, fontFamily: "var(--mono)", background: "var(--bg0)",
       }}>
         network context unavailable
       </div>
@@ -1026,11 +1029,61 @@ export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: Cros
     : []
 
   const assessment = behavior
-    ? buildAssessment(data.network_events, data.alerts, behavior)
+    ? buildAssessment(data.network_events, data.alerts)
     : null
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "var(--bg0)" }}>
+
+      {/* T0-7: Context banner — always visible, identifies which behavior is being analyzed.
+          If behavior prop is present, shows process name + timestamp + behavior_id.
+          If absent (no node selected), shows a distinct "no node selected" state so the
+          analyst is never silently looking at an unknown behavior. */}
+      <div style={{
+        padding: "5px 14px",
+        background: "var(--bg2)",
+        borderBottom: "1px solid var(--ln2)",
+        display: "flex", alignItems: "center", gap: 8,
+        flexShrink: 0,
+        fontFamily: "var(--mono)",
+      }}>
+        {behavior ? (
+          <>
+            <span style={{ fontSize: 10, color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>Analyzing</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", fontWeight: 600 }}>
+              {behavior.image?.split("\\").pop() || "unknown"}
+            </span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>·</span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>{fmtTs(behavior.timestamp)}</span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>·</span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>{behavior.behavior_id}</span>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: 10, color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase" }}>No node selected</span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>—</span>
+            <span style={{ fontSize: 10, color: "var(--t2)" }}>showing latest behavior</span>
+          </>
+        )}
+        {/* S-2: Correlation window selector — right-aligned in context banner */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>Window</span>
+          {([15, 30, 60] as const).map(m => (
+            <span
+              key={m}
+              onClick={() => setWindowMinutes(m)}
+              style={{
+                fontSize: 10, fontFamily: "var(--mono)", cursor: "pointer",
+                padding: "1px 6px", borderRadius: 2,
+                color: windowMinutes === m ? "var(--teal)" : "var(--t3)",
+                border: `1px solid ${windowMinutes === m ? "var(--teal3)" : "var(--ln2)"}`,
+                background: windowMinutes === m ? "var(--teal2)" : "transparent",
+                fontWeight: windowMinutes === m ? 600 : 400,
+              }}
+            >{m}m</span>
+          ))}
+        </div>
+      </div>
 
       {/* 1. Dominant verdict banner */}
       <CorroborationBanner data={data} />
@@ -1049,7 +1102,7 @@ export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: Cros
           {data.alerts.length > 0 && (
             <>
               <div style={{
-                fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                 letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6,
               }}>suricata alerts · {data.alerts.length}</div>
               {data.alerts.map((a, i) => <AlertCard key={i} alert={a} />)}
@@ -1060,7 +1113,7 @@ export default function CrossLayerTab({ behaviorId, behaviorTs, behavior }: Cros
           {data.network_events.length > 0 && (
             <>
               <div style={{
-                fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                 letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6,
               }}>network evidence</div>
               <AggregatedEventGroup

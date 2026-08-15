@@ -11,6 +11,8 @@ interface ApiNode {
   ts?: string
   score?: number
   on_chain?: boolean
+  integrity_level?: string   // T1-2: "System" | "High" | "Medium" | "Low" | ""
+  is_orphaned?: boolean      // T1-2: true when ppid not found in process window
 }
 
 interface ApiEdge {
@@ -22,6 +24,7 @@ interface ApiTreeData {
   nodes: ApiNode[]
   edges: ApiEdge[]
   behavior_pid?: string
+  behavior_pid_matched?: boolean  // T0-3: backend sets this; true = real match, false = fallback
   root?: string
 }
 
@@ -35,6 +38,8 @@ interface FlatNode {
   y: number
   hot: boolean
   tier: "root" | "red" | "blue" | "disc"
+  integrity_level: string   // T1-2
+  is_orphaned: boolean      // T1-2
 }
 
 interface Edge {
@@ -44,10 +49,10 @@ interface Edge {
 }
 
 const NODE_W = 148
-const NODE_H = 32
+const NODE_H = 40
 
 const TIER_COLOR = {
-  root: { fill: "rgba(28,34,48,0.95)", stroke: "rgba(255,255,255,0.09)", text: "rgba(255,255,255,0.30)" },
+  root: { fill: "rgba(28,34,48,0.95)", stroke: "rgba(255,255,255,0.09)", text: "rgba(255,255,255,0.65)" },
   red:  { fill: "rgba(229,83,75,0.09)", stroke: "rgba(229,83,75,0.40)", text: "#e5534b" },
   blue: { fill: "rgba(74,143,196,0.09)", stroke: "rgba(74,143,196,0.32)", text: "#4a8fc4" },
   disc: { fill: "rgba(123,109,212,0.08)", stroke: "rgba(123,109,212,0.28)", text: "#7b6dd4" },
@@ -123,9 +128,11 @@ function buildGraph(data: ApiTreeData): { flatNodes: FlatNode[]; edges: Edge[] }
       label: node.name || "unknown",
       sub: "pid " + node.id + (node.cmd ? " · " + node.cmd.replace(/^["\s]*/g, "").slice(0, 20) : ""),
       x: 20 + depth * 190,
-      y: 20 + myRow * 52,
+      y: 20 + myRow * 60,
       hot,
       tier,
+      integrity_level: node.integrity_level || "",   // T1-2
+      is_orphaned: node.is_orphaned ?? false,         // T1-2
     })
     if (parentIdx !== null) {
       const parent = flatNodes[parentIdx]
@@ -174,6 +181,18 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
     hovered: -1, selected: -1,
   })
   const { setSelectedBehavior, setHoveredNodeId } = useArgus()
+
+  // T0-4: Reset pan/zoom/selection whenever treeData changes (new case loaded).
+  // Prevents stale pan/zoom state from persisting across case switches.
+  useEffect(() => {
+    const s = stateRef.current
+    s.scale = 1
+    s.panX = 20
+    s.panY = 20
+    s.selected = -1
+    s.hovered = -1
+    setSelectedBehavior(null)
+  }, [treeData])
 
   // FIX-07: No demo fallback. If treeData is missing or empty, graph is null.
   const graph = treeData ? buildGraph(treeData) : null
@@ -248,7 +267,7 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
       ctx.bezierCurveTo(cx, ay, cx, by, bx, by)
       ctx.strokeStyle = inPath
         ? (e.hot ? "rgba(229,83,75,0.55)" : "rgba(61,184,144,0.35)")
-        : "rgba(255,255,255,0.05)"
+        : "rgba(255,255,255,0.12)"
       ctx.lineWidth = inPath ? (e.hot ? 1.5 : 1) : 0.75
       ctx.stroke()
     })
@@ -274,16 +293,55 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
       roundRect(ctx, x, y, w, h, 3 * s.scale)
       ctx.shadowBlur = 0
 
-      const fs = Math.max(9, 10 * s.scale)
-      ctx.fillStyle = inPath ? tc.text : "rgba(255,255,255,0.15)"
+      // T1-2: Dashed border overlay for orphaned nodes (ppid not in process window)
+      if (n.is_orphaned && inPath) {
+        ctx.save()
+        ctx.setLineDash([3 * s.scale, 3 * s.scale])
+        ctx.strokeStyle = "rgba(255,255,255,0.20)"
+        ctx.lineWidth = 1
+        roundRect(ctx, x, y, w, h, 3 * s.scale)
+        ctx.setLineDash([])
+        ctx.restore()
+      }
+
+      // T1-2: ↓priv label — amber badge when integrity drops from High/System to Medium/Low
+      // Detect by comparing this node's integrity to its parent's integrity
+      if (inPath && n.integrity_level) {
+        const PRIV_RANK: Record<string, number> = { System: 3, High: 2, Medium: 1, Low: 0 }
+        const myRank = PRIV_RANK[n.integrity_level] ?? -1
+        const parentEdge = edges.find(e => e.b === n.idx)
+        const parent = parentEdge ? flatNodes[parentEdge.a] : null
+        const parentRank = parent?.integrity_level ? (PRIV_RANK[parent.integrity_level] ?? -1) : -1
+        const isPrivDrop = parent !== null && parentRank > 1 && myRank < parentRank
+        if (isPrivDrop) {
+          const labelX = x + w - 28 * s.scale
+          const labelY = y + 3 * s.scale
+          const lw = 24 * s.scale
+          const lh = 11 * s.scale
+          ctx.fillStyle = "rgba(201,138,58,0.18)"
+          ctx.strokeStyle = "rgba(201,138,58,0.45)"
+          ctx.lineWidth = 0.75
+          ctx.beginPath()
+          ctx.roundRect(labelX, labelY, lw, lh, 2)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = "#c98a3a"
+          ctx.font = `600 ${Math.max(9, 9 * s.scale)}px "JetBrains Mono",monospace`
+          ctx.textBaseline = "top"
+          ctx.fillText("↓priv", labelX + 3 * s.scale, labelY + 2 * s.scale)
+        }
+      }
+
+      const fs = Math.max(11, 11 * s.scale)
+      ctx.fillStyle = inPath ? tc.text : "rgba(255,255,255,0.35)"
       ctx.font = `600 ${fs}px "JetBrains Mono",monospace`
       ctx.textBaseline = "top"
       ctx.fillText((n.label || "unknown").slice(0, 20), x + 8 * s.scale, y + 6 * s.scale)
 
-      const fs2 = Math.max(7, 8.5 * s.scale)
+      const fs2 = Math.max(9, 9 * s.scale)
       ctx.font = `${fs2}px "JetBrains Mono",monospace`
-      ctx.fillStyle = "rgba(255,255,255,0.18)"
-      ctx.fillText((n.sub || "").slice(0, 26), x + 8 * s.scale, y + 18 * s.scale)
+      ctx.fillStyle = "rgba(255,255,255,0.50)"
+      ctx.fillText((n.sub || "").slice(0, 26), x + 8 * s.scale, y + 22 * s.scale)
       ctx.globalAlpha = 1
     })
   }, [flatNodes, edges])
@@ -413,6 +471,19 @@ export default function ProcessTree({ treeData, behaviors = [] }: { treeData?: A
   return (
     <div ref={wrapRef} style={{ flex: 1, position: "relative", overflow: "hidden", cursor: "crosshair" }}>
       <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
+
+      {/* T0-3: Fallback indicator — shown when behavior PID was not in tree.
+          Backend must set behavior_pid_matched: false when falling back to richest subtree. */}
+      {treeData && treeData.behavior_pid_matched === false && (
+        <div style={{
+          position: "absolute", top: 8, left: 14,
+          fontSize: 9, fontFamily: "var(--mono)", color: "var(--amb)",
+          background: "var(--amb2)", border: "1px solid var(--amb3)",
+          padding: "2px 8px", borderRadius: 3, pointerEvents: "none",
+        }}>
+          ⚠ showing closest match · behavior PID not in tree
+        </div>
+      )}
 
       {/* Node tier legend */}
       <div style={{ position: "absolute", bottom: 28, left: 14, display: "flex", gap: 12, pointerEvents: "none" }}>

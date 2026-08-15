@@ -23,9 +23,22 @@ const TL_COLORS: Record<string, string> = {
 // New order: Process tree | Cross-layer | Timeline | Detection logic | Raw events
 const TABS = ["Process tree", "Cross-layer", "Timeline", "Detection logic", "Raw events"]
 
+// T1-4: Severity band + confidence display helper — shared logic with LeftRail.
+function severityBand(riskScore: number, behaviorCount: number, highestSeverity: string): { band: string; confidence: string; bandColor: string } {
+  const density = behaviorCount > 0 ? riskScore / behaviorCount : 0
+  const confidence = density > 300 ? "high" : density > 100 ? "medium" : "low"
+  const bandColor =
+    highestSeverity === "CRITICAL" ? "var(--red)" :
+    highestSeverity === "HIGH"     ? "var(--red)" :
+    highestSeverity === "MEDIUM"   ? "var(--amb)" : "var(--t3)"
+  return { band: highestSeverity, confidence, bandColor }
+}
+
 export default function Investigation() {
   const { selectedCase, selectedBehavior } = useArgus()
   const [activeTab, setActiveTab] = useState(0)
+  // S-5: Local optimistic status overrides — keyed by behavior_id
+  const [pinnedStatuses, setPinnedStatuses] = useState<Record<string, string>>({})
 
   const behaviorsQuery = useQuery({
     queryKey: ["behaviors", selectedCase?.case_id],
@@ -35,7 +48,7 @@ export default function Investigation() {
   })
 
   const behaviors_desc = behaviorsQuery.data
-    ? [...behaviorsQuery.data].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    ? [...behaviorsQuery.data.behaviors].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     : []
   const latestBehavior = behaviors_desc[0]
   const targetBehavior = selectedBehavior?.behavior_id ? selectedBehavior : latestBehavior
@@ -51,7 +64,7 @@ export default function Investigation() {
     return (
       <div style={{
         flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--t3)", fontSize: 12, fontFamily: "var(--mono)",
+        color: "var(--t2)", fontSize: 12, fontFamily: "var(--mono)",
         background: "var(--bg0)",
       }}>
         select a case from the queue
@@ -61,7 +74,7 @@ export default function Investigation() {
 
   const treeData = treeQuery.data as any
   const tactics = [...new Set(selectedCase.tactics_seen || [])]
-  const behaviors = behaviorsQuery.data || []
+  const behaviors = behaviorsQuery.data?.behaviors || []
 
   // FIX-11: Timeline dots positioned by actual timestamp delta, not array index.
   // Previously: pct = (i / behaviors.length) * 92 + 3 — evenly spaced regardless of time.
@@ -78,6 +91,32 @@ export default function Investigation() {
     label: new Date(b.timestamp).toISOString().slice(11, 16),
     count: b.detection_score || 10,
   }))
+
+  // T1-1: burst_windows comes from the API — server-side sliding window in get_case_behaviors.
+  // fetchCaseBehaviors now returns the full response {behaviors, burst_windows}.
+  const burstWindows: { count: number; span_seconds: number; start_ts: string; end_ts: string }[] =
+    behaviorsQuery.data?.burst_windows ?? []
+  const dominantBurst = burstWindows.length > 0
+    ? burstWindows.reduce((a, b) => b.count > a.count ? b : a)
+    : null
+
+  // S-5: Write behavior status pin to ES and update local state optimistically
+  function pinStatus(behaviorId: string, status: string) {
+    // Optimistic update — UI responds instantly
+    setPinnedStatuses(prev => ({ ...prev, [behaviorId]: status }))
+    fetch(`/api/behaviors/${behaviorId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => {
+      // Revert on failure
+      setPinnedStatuses(prev => {
+        const next = { ...prev }
+        delete next[behaviorId]
+        return next
+      })
+    })
+  }
 
   // Build behavior context object for CrossLayerTab
   const behaviorContext = targetBehavior ? {
@@ -114,7 +153,7 @@ export default function Investigation() {
         display: "flex", alignItems: "center", gap: 10, flexShrink: 0,
       }}>
         <span style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", padding: "3px 7px",
+          fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", padding: "3px 7px",
           borderRadius: 2, background: "var(--red2)", color: "var(--red)",
           border: "1px solid var(--red3)", flexShrink: 0,
         }}>
@@ -127,7 +166,11 @@ export default function Investigation() {
           <div style={{ fontSize: 10, color: "var(--t2)", display: "flex", gap: 6, fontFamily: "var(--mono)" }}>
             <span>{selectedCase.case_id}</span>
             <span style={{ color: "var(--t4)" }}>·</span>
-            <span>risk {selectedCase.risk_score.toLocaleString()}</span>
+            {/* T1-4: severity band + confidence replaces raw risk score */}
+            {(() => {
+              const sb = severityBand(selectedCase.risk_score, selectedCase.behavior_count, selectedCase.highest_severity)
+              return <span>{sb.band} · <span style={{ color: "var(--t3)" }}>{sb.confidence} confidence</span></span>
+            })()}
             <span style={{ color: "var(--t4)" }}>·</span>
             <span>{selectedCase.grouped_by.shared_host || "desktop-mm1rem9"}</span>
           </div>
@@ -138,7 +181,7 @@ export default function Investigation() {
             const col = TACTIC_COLOR[key] || "var(--t3)"
             return (
               <span key={t as string} style={{
-                fontSize: 9, padding: "2px 6px", borderRadius: 2,
+                fontSize: 10, padding: "2px 6px", borderRadius: 2,
                 border: `1px solid ${col}44`, background: `${col}14`, color: col,
               }}>{t as string}</span>
             )
@@ -185,30 +228,98 @@ export default function Investigation() {
 
       {/* Tab 2: Timeline — FIX-08: was tab 1, now tab 2 */}
       {activeTab === 2 && (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+
+          {/* T1-1: Burst activity banner — shown when 3+ behaviors occur within 90s */}
+          {dominantBurst && (
+            <div style={{
+              padding: "8px 20px",
+              background: "rgba(201,138,58,0.08)",
+              borderBottom: "1px solid rgba(201,138,58,0.22)",
+              borderLeft: "3px solid var(--amb)",
+              display: "flex", alignItems: "center", gap: 10,
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 10, color: "var(--amb)", fontWeight: 600 }}>⚡ Burst activity detected</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>·</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
+                {dominantBurst.count} behaviors in {dominantBurst.span_seconds}s
+              </span>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>·</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
+                {new Date(dominantBurst.start_ts).toISOString().slice(11, 19)} UTC
+              </span>
+              {burstWindows.length > 1 && (
+                <>
+                  <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>·</span>
+                  <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
+                    {burstWindows.length} burst windows total
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
         <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
-          <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
             behavior timeline · {behaviors.length} events
           </div>
           {behaviors.slice(0, 30).map((b) => {
             const key = (b.tactic || "exec").toLowerCase().slice(0, 4)
             const col = TL_COLORS[key] || "#4a8fc4"
+            // S-5: Use local optimistic status if set, else fall back to server status
+            const status = pinnedStatuses[b.behavior_id] || b.status || ""
+
+            // S-5: Status pin color semantics
+            const statusStyle: Record<string, { color: string; bg: string; border: string }> = {
+              CONFIRMED:   { color: "var(--red)",  bg: "rgba(229,83,75,0.10)",  border: "rgba(229,83,75,0.28)" },
+              INVESTIGATED:{ color: "var(--teal)", bg: "rgba(61,184,144,0.07)", border: "rgba(61,184,144,0.18)" },
+              NOISE:       { color: "var(--t3)",   bg: "var(--bg3)",            border: "var(--ln2)" },
+            }
+            const ss = statusStyle[status]
+
             return (
               <div key={b.behavior_id} style={{
-                display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6,
-                padding: "5px 8px", borderRadius: 3, borderLeft: `2px solid ${col}44`,
+                display: "flex", alignItems: "center", gap: 10, marginBottom: 4,
+                padding: "5px 8px", borderRadius: 3,
+                borderLeft: `2px solid ${ss ? ss.color : col + "44"}`,
+                opacity: status === "NOISE" ? 0.45 : 1,
+                transition: "opacity 0.15s",
               }}>
-                <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", flexShrink: 0 }}>
+                <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", flexShrink: 0, width: 62 }}>
                   {new Date(b.timestamp).toISOString().slice(11, 19)}
                 </span>
-                <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 2, background: `${col}14`, color: col, flexShrink: 0 }}>
+                <span style={{ fontSize: 10, padding: "1px 5px", borderRadius: 2, background: `${col}14`, color: col, flexShrink: 0 }}>
                   {b.tactic || "UNKNOWN"}
                 </span>
-                <span style={{ fontSize: 10, color: "var(--t2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 10, color: "var(--t2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {b.description}
                 </span>
+                {/* S-5: Status pin controls — three inline buttons, appear on every row */}
+                <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+                  {(["CONFIRMED", "INVESTIGATED", "NOISE"] as const).map(s => (
+                    <span
+                      key={s}
+                      onClick={() => pinStatus(b.behavior_id, status === s ? "" : s)}
+                      title={status === s ? `Unpin ${s}` : s}
+                      style={{
+                        fontSize: 10, fontFamily: "var(--mono)", cursor: "pointer",
+                        padding: "1px 5px", borderRadius: 2,
+                        color:      status === s ? statusStyle[s].color : "var(--t4)",
+                        background: status === s ? statusStyle[s].bg    : "transparent",
+                        border:     `1px solid ${status === s ? statusStyle[s].border : "var(--ln)"}`,
+                        fontWeight: status === s ? 600 : 400,
+                        transition: "all 0.1s",
+                      }}
+                    >
+                      {s === "CONFIRMED" ? "C" : s === "INVESTIGATED" ? "I" : "N"}
+                    </span>
+                  ))}
+                </div>
               </div>
             )
           })}
+        </div>
         </div>
       )}
 
@@ -226,7 +337,7 @@ export default function Investigation() {
           <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
             {/* Header */}
             <div style={{
-              fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+              fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
               letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12,
               display: "flex", gap: 10, alignItems: "center",
             }}>
@@ -255,31 +366,31 @@ export default function Investigation() {
                     {/* Hit count badge */}
                     {hits.length > 1 && (
                       <span style={{
-                        fontSize: 9, fontFamily: "var(--mono)", padding: "1px 5px",
+                        fontSize: 10, fontFamily: "var(--mono)", padding: "1px 5px",
                         borderRadius: 2, background: "var(--bg3)", color: "var(--t2)",
                         border: "1px solid var(--ln)", flexShrink: 0,
                       }}>×{hits.length}</span>
                     )}
                     {/* behavior_class */}
                     <span style={{
-                      fontSize: 9, padding: "1px 5px", borderRadius: 2,
+                      fontSize: 10, padding: "1px 5px", borderRadius: 2,
                       background: `${classColor}14`, color: classColor,
                       border: `1px solid ${classColor}44`, flexShrink: 0,
                     }}>{bclass}</span>
                     {/* confidence */}
                     <span style={{
-                      fontSize: 9, fontFamily: "var(--mono)", color: confColor, flexShrink: 0,
+                      fontSize: 10, fontFamily: "var(--mono)", color: confColor, flexShrink: 0,
                     }}>{conf}</span>
                     {/* technique */}
                     {technique && (
                       <span style={{
-                        fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", flexShrink: 0,
+                        fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", flexShrink: 0,
                       }}>{technique}</span>
                     )}
                     {/* process name */}
                     {first.process_name && first.process_name !== "unknown" && (
                       <span style={{
-                        fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+                        fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                         marginLeft: "auto", flexShrink: 0,
                       }}>{first.process_name}</span>
                     )}
@@ -295,10 +406,10 @@ export default function Investigation() {
                     <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px solid var(--ln)" }}>
                       {reasons.map((r: any, i: number) => (
                         <div key={i} style={{
-                          fontSize: 9, color: "var(--t3)", display: "flex", gap: 6,
+                          fontSize: 10, color: "var(--t2)", display: "flex", gap: 6,
                           marginTop: i > 0 ? 3 : 0, fontFamily: "var(--mono)",
                         }}>
-                          <span style={{ color: "var(--teal)", flexShrink: 0 }}>+{r.weight}</span>
+                          <span style={{ color: "var(--blue)", flexShrink: 0 }}>+{r.weight}</span>
                           <span>{r.reason}</span>
                         </div>
                       ))}
@@ -313,7 +424,7 @@ export default function Investigation() {
                     }}>
                       {hits.map((h: any, i: number) => (
                         <span key={i} style={{
-                          fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
+                          fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
                           padding: "1px 4px", background: "var(--bg1)", borderRadius: 2,
                         }}>
                           {new Date(h.timestamp).toISOString().slice(11, 19)}
@@ -331,15 +442,15 @@ export default function Investigation() {
       {/* Tab 4: Raw events — FIX-08: was tab 3, now tab 4 */}
       {activeTab === 4 && (
         <div style={{ flex: 1, padding: "16px 20px", overflow: "auto" }}>
-          <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
             raw events
           </div>
           {behaviors.slice(0, 20).map(b => (
             <div key={b.behavior_id} style={{
               marginBottom: 8, padding: "8px 10px", background: "var(--bg2)",
-              borderRadius: 3, border: "1px solid var(--ln)", fontFamily: "var(--mono)", fontSize: 9,
+              borderRadius: 3, border: "1px solid var(--ln)", fontFamily: "var(--mono)", fontSize: 10,
             }}>
-              <div style={{ color: "var(--teal)", marginBottom: 4 }}>{b.behavior_id}</div>
+              <div style={{ color: "var(--t2)", marginBottom: 4 }}>{b.behavior_id}</div>
               <div style={{ color: "var(--t2)", wordBreak: "break-all" }}>
                 {b.command_line || b.description || "no command line"}
               </div>
@@ -358,7 +469,7 @@ export default function Investigation() {
           flexShrink: 0, padding: "7px 14px 0",
         }}>
           <div style={{
-            fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+            fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
             letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 5,
           }}>
             behavior timeline · {selectedCase.behavior_count} events
@@ -376,7 +487,7 @@ export default function Investigation() {
                 >
                   <div style={{ width: sz, height: sz, borderRadius: "50%", border: `1px solid ${col}`, background: `${col}22`, margin: "0 auto" }} />
                   <div style={{ width: 1, height: Math.max(4, e.count / 5), background: `${col}44`, margin: "1px auto" }} />
-                  <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)", textAlign: "center", whiteSpace: "nowrap" }}>{e.label}</div>
+                  <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", textAlign: "center", whiteSpace: "nowrap" }}>{e.label}</div>
                 </div>
               )
             })}

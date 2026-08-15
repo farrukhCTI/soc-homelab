@@ -1,0 +1,100 @@
+# Single entrypoint for the whole demo: `docker compose up --build` from
+# the repo root brings up Elasticsearch, Kibana, and all three Argus
+# services. This replaces the old start_argus.ps1, which opened four
+# separate PowerShell windows by hand.
+#
+# `include:` pulls in the existing Elastic stack file as-is rather than
+# duplicating or rewriting it — docker/elastic/docker-compose.yml still
+# works standalone (`docker compose -f docker/elastic/docker-compose.yml
+# up -d`) for anyone who only wants the ES/Kibana half. `include` merges
+# both files into one Compose project, so services defined below can join
+# the `elastic` network and resolve the `elasticsearch` service by name,
+# without needing `networks: elastic: external: true` — that alternative
+# would require the Elastic stack to already be running before this file
+# is invoked, which just reintroduces a manual multi-step startup under a
+# different name. `include` keeps the one-command promise.
+include:
+  - docker/elastic/docker-compose.yml
+
+x-argus-backend: &argus-backend
+  build:
+    context: ./argus
+  environment:
+    ES_URL: http://elasticsearch:9200
+    ES_USER: ${ES_USER}
+    ES_PASS: ${ELASTIC_PASSWORD}
+  depends_on:
+    elasticsearch:
+      condition: service_healthy
+  networks:
+    - elastic
+  restart: unless-stopped
+
+services:
+  # --- behavior_detector and case_builder are daemons: they poll
+  # Elasticsearch on a loop (60s / continuous) and don't serve traffic
+  # themselves, so they only need elasticsearch to be healthy, not each
+  # other. Both wait on the same condition independently rather than one
+  # depending on the other, since neither blocks on the other's output —
+  # case_builder just finds nothing to group until behavior_detector has
+  # written its first pass.
+  behavior_detector:
+    <<: *argus-backend
+    command: python behavior_detector.py
+
+  case_builder:
+    <<: *argus-backend
+    command: python case_builder.py
+
+  # --- The API also only needs Elasticsearch, not the daemons above —
+  # it reads whatever's in the indices at query time, seeded or
+  # detector-written. It gets its own healthcheck (GET /health) so the
+  # frontend, in turn, can wait on *this* being ready rather than merely
+  # started.
+  argus-api:
+    <<: *argus-backend
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    environment:
+      ES_URL: http://elasticsearch:9200
+      ES_USER: ${ES_USER}
+      ES_PASS: ${ELASTIC_PASSWORD}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --- One-off seeder, not part of the default `up`. Loads datasets/ into
+  # a running Elasticsearch. Run explicitly with:
+  #   docker compose run --rm seed
+  # Safe to re-run — it deletes and recreates argus-cases/-behaviors/-actions
+  # each time rather than appending, so it's idempotent.
+  seed:
+    <<: *argus-backend
+    command: python seed_argus.py
+    volumes:
+      - ./datasets:/data:ro
+    profiles: ["tools"]
+
+  # --- Frontend is last in the chain: it depends on argus-api being
+  # healthy (not just started), because vite preview's /api proxy target
+  # (argus-api:8000, see vite.config.ts) needs something listening on the
+  # other end. It does NOT need to wait on Elasticsearch directly — that's
+  # a transitive dependency through argus-api, not a direct one.
+  frontend:
+    build:
+      context: ./argus/frontend-react
+    environment:
+      VITE_API_PROXY_TARGET: http://argus-api:8000
+    depends_on:
+      argus-api:
+        condition: service_healthy
+    ports:
+      - "5173:5173"
+    networks:
+      - elastic
+    restart: unless-stopped

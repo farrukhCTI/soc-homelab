@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 import os
 import time
 from datetime import datetime, timezone
@@ -10,21 +10,29 @@ ES_PASS = os.environ.get("ES_PASS", "")
 es = Elasticsearch(ES_URL, basic_auth=(ES_USER, ES_PASS))
 
 # ---------------------------------------------------------------------------
-# BEHAVIORAL SIGNAL PROFILES
+# BEHAVIOR ENRICHMENT PROFILES
 #
 # Argus is a behavior enrichment and case correlation layer, NOT a detection
-# engine. Elastic/Sysmon rules handle detection. These profiles define
-# suspicious activity signals that Argus normalizes into investigation-ready
-# behaviors for analyst review.
+# engine. Elastic/Sysmon rules handle upstream detection. These profiles define
+# behavioral signals that Argus normalizes into investigation-ready behavior
+# objects for analyst review.
 #
-# Important: these are behavioral signals, not precise detections. They use
-# substring matching and will produce false positives on benign admin activity.
-# Confidence and behavior_class fields reflect signal quality per profile.
-# Analysts should treat LOW confidence signals as context, not findings.
+# Terminology (canonical per v17):
+#   detection    = upstream Elastic/Sysmon rule that fired
+#   signal       = primitive evidence from telemetry before enrichment
+#   behavior     = Argus normalized analytical object written to argus-behaviors
+#   finding      = analyst-facing interpreted conclusion (from briefing/assessment)
+#   assessment   = confidence-scored interpretation block
+#   corroboration = independent NDR evidence confirming an EDR behavior
+#
+# Important: these are behavioral signals, not precise detections. Substring
+# matching will produce false positives on benign admin activity. Confidence
+# and behavior_class fields reflect signal quality per profile. Analysts should
+# treat LOW confidence signals as context only, not confirmed findings.
 #
 # Suppression: MAX_BEHAVIORS_PER_EVENT caps how many profiles fire per raw
-# event. Highest priority_score profiles win. This prevents one Atomic test
-# from flooding the behavior index with near-duplicate entries.
+# event. Highest priority_score profiles win. Prevents one Atomic test from
+# flooding argus-behaviors with near-duplicate entries.
 #
 # Profile fields:
 #   event_codes    : Sysmon EIDs to query (1=process, 10=proc access, 11=file, 13=registry)
@@ -43,7 +51,7 @@ es = Elasticsearch(ES_URL, basic_auth=(ES_USER, ES_PASS))
 
 MAX_BEHAVIORS_PER_EVENT = 3  # cap per raw source event, highest priority wins
 
-DETECTION_PROFILES = {
+BEHAVIOR_PROFILES = {
 
     # --- EXECUTION -----------------------------------------------------------
 
@@ -679,29 +687,36 @@ def match_profile(profile, src, eid):
     return True, reasons
 
 
-def run_detection_for_eid(eid):
+def run_enrichment_for_eid(eid):
     global last_seen
 
     gte = last_seen[eid] if last_seen[eid] else "now-1h"
 
-    resp = es.search(
-        index="logs-winlog.winlog-default",
-        size=200,
-        sort=[{"@timestamp": {"order": "asc"}}],
-        query={
-            "bool": {
-                "must": {"match": {"event.code": str(eid)}},
-                "filter": {"range": {"@timestamp": {"gt": gte}}}
+    try:
+        resp = es.search(
+            index="logs-winlog.winlog-default",
+            size=200,
+            sort=[{"@timestamp": {"order": "asc"}}],
+            query={
+                "bool": {
+                    "must": {"match": {"event.code": str(eid)}},
+                    "filter": {"range": {"@timestamp": {"gt": gte}}}
+                }
             }
-        }
-    )
+        )
+    except NotFoundError:
+        # No Winlogbeat/Elastic Agent data has landed yet (fresh cluster,
+        # nothing ingested). Not an error condition — just nothing to do
+        # this cycle. Matches the same tolerance case_builder.py has for
+        # a missing argus-cases index on a fresh cluster.
+        return 0, 0
 
     hits = resp["hits"]["hits"]
     written = 0
 
     # Profiles relevant to this EID
     relevant = {
-        name: p for name, p in DETECTION_PROFILES.items()
+        name: p for name, p in BEHAVIOR_PROFILES.items()
         if eid in p.get("event_codes", [])
     }
 
@@ -770,11 +785,11 @@ def run_detection_for_eid(eid):
     return len(hits), written
 
 
-def run_detection():
+def run_enrichment():
     total_scanned = 0
     total_written = 0
     for eid in [1, 10, 11, 13]:
-        scanned, written = run_detection_for_eid(eid)
+        scanned, written = run_enrichment_for_eid(eid)
         total_scanned += scanned
         total_written += written
 
@@ -785,7 +800,7 @@ def run_detection():
 
 
 print("Argus behavior detector starting. Poll interval: 60s. Ctrl+C to stop.")
-print(f"Loaded {len(DETECTION_PROFILES)} detection profiles across EIDs 1, 10, 11, 13.")
+print(f"Loaded {len(BEHAVIOR_PROFILES)} behavior enrichment profiles across EIDs 1, 10, 11, 13.")
 while True:
-    run_detection()
+    run_enrichment()
     time.sleep(60)

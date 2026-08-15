@@ -34,7 +34,7 @@ export default function TopBar({ view, setView }: Props) {
         padding: "0 14px", borderRight: "1px solid var(--ln2)",
       }}>
         {(["ES", "Fleet", "ILM"] as string[]).map(label => (
-          <span key={label} style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+          <span key={label} style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
             {label}
           </span>
         ))}
@@ -49,7 +49,7 @@ export default function TopBar({ view, setView }: Props) {
             style={{
               height: "100%", display: "flex", alignItems: "center",
               padding: "0 14px", cursor: "pointer", fontSize: 10,
-              color: view === tab.key ? "var(--t1)" : "var(--t3)",
+              color: view === tab.key ? "var(--t1)" : "var(--t2)",
               borderBottom: `1.5px solid ${view === tab.key ? "var(--teal)" : "transparent"}`,
               letterSpacing: "0.02em", transition: "color 0.12s",
             }}
@@ -61,15 +61,15 @@ export default function TopBar({ view, setView }: Props) {
       {view === "investigation" && (selectedCase || selectedBehavior) && (
         <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 14px", borderLeft: "1px solid var(--ln2)" }}>
           <span
-            style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t3)", cursor: "pointer", padding: "2px 4px" }}
+            style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", cursor: "pointer", padding: "2px 4px" }}
             onClick={() => { setSelectedCase(null); setSelectedBehavior(null) }}
           >Queue</span>
           {selectedCase && <>
-            <span style={{ color: "var(--t4)", fontSize: 10 }}>›</span>
+            <span style={{ color: "var(--t3)", fontSize: 10 }}>›</span>
             <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", padding: "2px 4px" }}>{selectedCase.case_id}</span>
           </>}
           {selectedBehavior && <>
-            <span style={{ color: "var(--t4)", fontSize: 10 }}>›</span>
+            <span style={{ color: "var(--t3)", fontSize: 10 }}>›</span>
             <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", padding: "2px 4px" }}>
               {selectedBehavior.process_name || selectedBehavior.behavior_id}
             </span>

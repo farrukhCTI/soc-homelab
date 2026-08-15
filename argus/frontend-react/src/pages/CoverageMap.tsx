@@ -210,7 +210,7 @@ export default function CoverageMap() {
         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--t1)", letterSpacing: "0.04em", marginBottom: 4 }}>
           COVERAGE MAP
         </div>
-        <div style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)" }}>
+        <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>
           Detection coverage across Elastic/Sysmon upstream rules and Argus behavioral signal profiles.
           Argus enriches and correlates — it does not replace the underlying detection engine.
         </div>
@@ -232,7 +232,7 @@ export default function CoverageMap() {
           }}>
             <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: "var(--mono)", lineHeight: 1 }}>{value}</div>
             <div style={{ fontSize: 10, color: "var(--t2)", marginTop: 4 }}>{label}</div>
-            <div style={{ fontSize: 9, color: "var(--t4)", fontFamily: "var(--mono)", marginTop: 2 }}>{sub}</div>
+            <div style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)", marginTop: 2 }}>{sub}</div>
           </div>
         ))}
       </div>
@@ -253,17 +253,17 @@ export default function CoverageMap() {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
               <span style={{ color, fontSize: 14 }}>{icon}</span>
-              <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t4)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{layer}</span>
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{layer}</span>
             </div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--t1)", marginBottom: 4 }}>{title}</div>
-            <div style={{ fontSize: 10, color: "var(--t3)", lineHeight: 1.5 }}>{desc}</div>
+            <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.5 }}>{desc}</div>
           </div>
         ))}
       </div>
 
       {/* Tactic grid — Argus profiles grouped by tactic */}
       <div>
-        <div style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+        <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
           Argus Behavioral Signals by Tactic
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -278,7 +278,7 @@ export default function CoverageMap() {
               }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: "var(--t2)", marginBottom: 8, fontFamily: "var(--mono)", letterSpacing: "0.06em" }}>
                   {TACTIC_LABEL[tactic] || tactic}
-                  <span style={{ color: "var(--t4)", fontWeight: 400, marginLeft: 8 }}>
+                  <span style={{ color: "var(--t3)", fontWeight: 400, marginLeft: 8 }}>
                     {profiles.length} signal{profiles.length !== 1 ? "s" : ""}
                   </span>
                 </div>
@@ -298,11 +298,10 @@ export default function CoverageMap() {
                             color: "var(--teal)",
                           }}>{p.technique}</span>
                           {/* Confidence dot */}
-                          <span style={{
+                          <span title={p.confidence} style={{
                             width: 5, height: 5, borderRadius: "50%",
                             background: CONFIDENCE_COLOR[p.confidence],
                             flexShrink: 0,
-                            title: p.confidence,
                           }} />
                           {/* Elastic coverage indicator */}
                           {elasticCovers && (
@@ -313,8 +312,8 @@ export default function CoverageMap() {
                             }}>ES</span>
                           )}
                         </div>
-                        <div style={{ fontSize: 9, color: "var(--t2)", lineHeight: 1.3 }}>{p.description}</div>
-                        <div style={{ fontSize: 8, color: "var(--t4)", fontFamily: "var(--mono)" }}>{p.behavior_class}</div>
+                        <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.3 }}>{p.description}</div>
+                        <div style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)" }}>{p.behavior_class}</div>
                       </div>
                     )
                   })}
@@ -330,7 +329,7 @@ export default function CoverageMap() {
         background: "var(--bg1)", border: "1px solid var(--ln2)", borderRadius: 4,
         padding: "10px 16px", display: "flex", alignItems: "center", gap: 20,
       }}>
-        <span style={{ fontSize: 9, color: "var(--t4)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Legend</span>
+        <span style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Legend</span>
         {[
           { label: "High confidence signal",   color: CONFIDENCE_COLOR.high },
           { label: "Medium confidence signal",  color: CONFIDENCE_COLOR.medium },
@@ -338,7 +337,7 @@ export default function CoverageMap() {
         ].map(({ label, color }) => (
           <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0, display: "inline-block" }} />
-            <span style={{ fontSize: 9, color: "var(--t3)", fontFamily: "var(--mono)" }}>{label}</span>
+            <span style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>{label}</span>
           </div>
         ))}
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -347,7 +346,7 @@ export default function CoverageMap() {
             background: "rgba(70,190,180,0.08)", border: "1px solid rgba(70,190,180,0.2)",
             borderRadius: 2, padding: "0 3px",
           }}>ES</span>
-          <span style={{ fontSize: 9, color: "var(--t3)", fontFamily: "var(--mono)" }}>Elastic rule also covers this technique</span>
+          <span style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>Elastic rule also covers this technique</span>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState } from "react"
+import type { ReactNode } from "react"
 import type { Case, Behavior } from "./types"
 
 export type View = "investigation" | "actions" | "hunt" | "coverage"
@@ -30,6 +31,21 @@ interface ArgusState {
 
 const Ctx = createContext<ArgusState>(null!)
 
+// S-4: Write minimal session state to ES when case is selected.
+// Non-fatal — session write failure never blocks investigation.
+function persistSession(caseId: string, behaviorId?: string | null) {
+  fetch("/api/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      case_id:              caseId,
+      selected_behavior_id: behaviorId ?? null,
+    }),
+  }).catch(() => {
+    // Non-fatal — session persistence is best-effort
+  })
+}
+
 export function ArgusProvider({ children }: { children: ReactNode }) {
   const [selectedCase, setSelectedCase] = useState<Case | null>(null)
   const [selectedBehavior, setSelectedBehavior] = useState<Behavior | null>(null)
@@ -37,9 +53,16 @@ export function ArgusProvider({ children }: { children: ReactNode }) {
   const [activeRailTab, setActiveRailTab] = useState(0)
   const [activeView, setActiveView] = useState<View>("investigation")
   const [huntPivot, setHuntPivot] = useState<HuntPivot | null>(null)
+
+  // S-4: Wrap setSelectedCase to persist session on every case change
+  function selectCase(c: Case | null) {
+    setSelectedCase(c)
+    if (c?.case_id) persistSession(c.case_id, null)
+  }
+
   return (
     <Ctx.Provider value={{
-      selectedCase, setSelectedCase,
+      selectedCase, setSelectedCase: selectCase,
       selectedBehavior, setSelectedBehavior,
       hoveredNodeId, setHoveredNodeId,
       activeRailTab, setActiveRailTab,

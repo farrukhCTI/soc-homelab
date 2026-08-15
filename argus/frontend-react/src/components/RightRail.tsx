@@ -60,7 +60,7 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
       fontFamily: "inherit", transition: "all 0.1s",
     }}>
       <span>{label}</span>
-      <span style={{ fontSize: 9, color: "var(--t4)" }}>{open === key ? "▲" : "▼"}</span>
+      <span style={{ fontSize: 10, color: "var(--t3)" }}>{open === key ? "▲" : "▼"}</span>
     </button>
   )
 
@@ -81,12 +81,12 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
   return (
     <div>
       {/* ── Case actions ── */}
-      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 8 }}>Case actions</div>
+      <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t2)", textTransform: "uppercase", marginBottom: 8 }}>Case actions</div>
 
       {btn("Escalate case", "escalate", "var(--red)", "var(--red2)", "var(--red3)")}
       {open === "escalate" && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--red3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
-          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
             Escalate <strong style={{ color: "var(--red)" }}>{selectedCase.case_id}</strong> to Tier 2. This will be logged in the Actions trail.
           </div>
           {submitBtn("Confirm escalate", "ESCALATE", "var(--red)")}
@@ -122,22 +122,22 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
 
       {/* ── Closure states ── */}
       <div style={{ height: 1, background: "var(--ln2)", margin: "10px 0 8px" }} />
-      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 8 }}>Close case</div>
+      <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t2)", textTransform: "uppercase", marginBottom: 8 }}>Close case</div>
 
-      {btn("Mark resolved", "resolved", "var(--teal)", "var(--teal2)", "var(--teal3)")}
+      {btn("Mark resolved", "resolved", "var(--grn)", "var(--grn2)", "var(--grn3)")}
       {open === "resolved" && (
-        <div style={{ background: "var(--bg3)", border: "1px solid var(--teal3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
-          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
-            Mark <strong style={{ color: "var(--teal)" }}>{selectedCase.case_id}</strong> as resolved. No further action required.
+        <div style={{ background: "var(--bg3)", border: "1px solid var(--grn3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
+          <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+            Mark <strong style={{ color: "var(--grn)" }}>{selectedCase.case_id}</strong> as resolved. No further action required.
           </div>
-          {submitBtn("Confirm resolved", "RESOLVED", "var(--teal)")}
+          {submitBtn("Confirm resolved", "RESOLVED", "var(--grn)")}
         </div>
       )}
 
       {btn("Confirmed malicious", "confirmed", "var(--red)", "var(--red2)", "var(--red3)")}
       {open === "confirmed" && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--red3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
-          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
             Confirm <strong style={{ color: "var(--red)" }}>{selectedCase.case_id}</strong> as a true positive malicious incident.
           </div>
           {submitBtn("Confirm malicious", "CONFIRMED_MALICIOUS", "var(--red)")}
@@ -147,7 +147,7 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
       {btn("False positive", "fp", "var(--grn)", "var(--grn2)", "var(--grn3)")}
       {open === "fp" && (
         <div style={{ background: "var(--bg3)", border: "1px solid var(--grn3)", borderRadius: 3, padding: "8px 10px", marginBottom: 6, marginTop: -2 }}>
-          <div style={{ fontSize: 9, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 8, lineHeight: 1.5 }}>
             Dismiss <strong style={{ color: "var(--grn)" }}>{selectedCase.case_id}</strong> as a false positive. Detection rules may need tuning.
           </div>
           {submitBtn("Confirm false positive", "FALSE_POSITIVE", "var(--grn)")}
@@ -155,39 +155,63 @@ function ActionsPanel({ selectedCase }: ActionsPanelProps) {
       )}
 
       {status === "ok" && (
-        <div style={{ fontSize: 9, color: "var(--grn)", fontFamily: "var(--mono)", marginTop: 6, padding: "4px 8px", background: "var(--grn2)", borderRadius: 3 }}>
+        <div style={{ fontSize: 10, color: "var(--grn)", fontFamily: "var(--mono)", marginTop: 6, padding: "4px 8px", background: "var(--grn2)", borderRadius: 3 }}>
           Action logged successfully
         </div>
       )}
       {status && status !== "ok" && (
-        <div style={{ fontSize: 9, color: "var(--red)", fontFamily: "var(--mono)", marginTop: 6 }}>{status}</div>
+        <div style={{ fontSize: 10, color: "var(--red)", fontFamily: "var(--mono)", marginTop: 6 }}>{status}</div>
       )}
     </div>
   )
 }
 
-function BriefingPanel({ data }: { data: any }) {
+function BriefingPanel({ data, generatedAt }: { data: any; generatedAt?: number }) {
   const b = data?.briefing || data
   const steps: string[] = Array.isArray(b?.next_steps) ? b.next_steps : []
+
+  // T1-5: AI provenance label — how long ago this briefing was generated
+  const ageLabel = generatedAt
+    ? (() => {
+        const diffMs = Date.now() - generatedAt
+        const diffH = Math.floor(diffMs / 3600000)
+        const diffM = Math.floor(diffMs / 60000)
+        return diffH > 0 ? `${diffH}h ago` : diffM > 0 ? `${diffM}m ago` : "just now"
+      })()
+    : null
+
   return (
     <>
+      {/* T1-5: AI provenance label */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 5,
+        marginBottom: 8, marginTop: 6,
+        padding: "3px 6px", borderRadius: 2,
+        background: "var(--pur2)", border: "1px solid var(--pur3)",
+        alignSelf: "flex-start",
+      }}>
+        <span style={{ fontSize: 8, color: "var(--pur)", fontFamily: "var(--mono)" }}>⚡ AI</span>
+        {ageLabel && (
+          <span style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)" }}>· {ageLabel}</span>
+        )}
+      </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "var(--mono)", color: b?.escalate ? "var(--red)" : "var(--amb)" }}>
             {b?.escalate ? "HIGH" : "MED"}
           </div>
-          <div style={{ fontSize: 9, color: "var(--t3)", lineHeight: 1.4 }}>escalate<br />recommendation</div>
+          <div style={{ fontSize: 10, color: "var(--t2)", lineHeight: 1.4 }}>escalate<br />recommendation</div>
         </div>
       </div>
       <div style={{ fontSize: 11, color: "var(--t1)", fontWeight: 500, lineHeight: 1.5, marginBottom: 7 }}>
         {b?.summary}
       </div>
-      <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 5 }}>
+      <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t2)", textTransform: "uppercase", marginBottom: 5 }}>
         Next steps
       </div>
       {steps.map((step: string, i: number) => (
         <div key={i} style={{ display: "flex", gap: 5, marginBottom: 4 }}>
-          <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--teal)", flexShrink: 0, marginTop: 1 }}>0{i + 1}</span>
+          <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--blue)", flexShrink: 0, marginTop: 1 }}>0{i + 1}</span>
           <span style={{ fontSize: 10, color: i === 0 ? "var(--t1)" : "var(--t2)", lineHeight: 1.4 }}>{step}</span>
         </div>
       ))}
@@ -228,8 +252,8 @@ export default function RightRail() {
       <div style={{ display: "flex", borderBottom: "1px solid var(--ln)", flexShrink: 0 }}>
         {TABS.map((t, i) => (
           <div key={t} onClick={() => setActiveRailTab(i)} style={{
-            flex: 1, fontSize: 9, fontFamily: "var(--mono)", letterSpacing: "0.06em",
-            color: activeRailTab === i ? "var(--teal)" : "var(--t3)",
+            flex: 1, fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.06em",
+            color: activeRailTab === i ? "var(--teal)" : "var(--t2)",
             textAlign: "center", padding: "7px 0", cursor: "pointer",
             borderBottom: `1.5px solid ${activeRailTab === i ? "var(--teal)" : "transparent"}`,
             textTransform: "uppercase",
@@ -250,24 +274,42 @@ export default function RightRail() {
 
             <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3, marginTop: 8 }}>
               <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--red)" }} />
-              <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
-                {selectedCase ? `${selectedCase.status.toUpperCase()} · risk ${selectedCase.risk_score.toLocaleString()}` : "no case selected"}
+              <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
+                {selectedCase ? `${selectedCase.status.toUpperCase()} · ${selectedCase.highest_severity}` : "no case selected"}
               </span>
             </div>
 
             {selectedBehavior && selectedBehavior.behavior_id && briefQuery.data ? (
-              <BriefingPanel data={briefQuery.data} />
+              <BriefingPanel data={briefQuery.data} generatedAt={briefQuery.dataUpdatedAt} />
             ) : selectedBehavior && selectedBehavior.behavior_id && briefQuery.isLoading ? (
               <div style={{ fontSize: 10, color: "var(--t3)", marginTop: 10 }}>Loading briefing...</div>
             ) : !selectedBehavior && selectedCase && summaryQuery.data ? (
               <>
-                <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t2)", textTransform: "uppercase", marginBottom: 6 }}>
                   Case summary
                 </div>
-                <div style={{ fontSize: 11, color: "var(--t1)", lineHeight: 1.55, borderLeft: "2px solid var(--teal3)", paddingLeft: 8 }}>
+                {/* T1-5: AI provenance label on case summary */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 5,
+                  marginBottom: 6, padding: "3px 6px", borderRadius: 2,
+                  background: "var(--pur2)", border: "1px solid var(--pur3)",
+                }}>
+                  <span style={{ fontSize: 8, color: "var(--pur)", fontFamily: "var(--mono)" }}>⚡ AI</span>
+                  {summaryQuery.dataUpdatedAt > 0 && (
+                    <span style={{ fontSize: 10, color: "var(--t4)", fontFamily: "var(--mono)" }}>
+                      · {(() => {
+                          const diffMs = Date.now() - summaryQuery.dataUpdatedAt
+                          const diffH = Math.floor(diffMs / 3600000)
+                          const diffM = Math.floor(diffMs / 60000)
+                          return diffH > 0 ? `${diffH}h ago` : diffM > 0 ? `${diffM}m ago` : "just now"
+                        })()}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--t1)", lineHeight: 1.55, borderLeft: "2px solid var(--ln3)", paddingLeft: 8 }}>
                   {summaryQuery.data}
                 </div>
-                <div style={{ marginTop: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+                <div style={{ marginTop: 10, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>
                   Click a process node to get behavior-level AI briefing.
                 </div>
               </>
@@ -281,7 +323,7 @@ export default function RightRail() {
 
         {activeRailTab === 1 && selectedCase && (
           <>
-            <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t3)", textTransform: "uppercase", marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t2)", textTransform: "uppercase", marginBottom: 6 }}>
               Entities
             </div>
 
@@ -301,10 +343,10 @@ export default function RightRail() {
                   border: "1px solid transparent",
                 }}
               >
-                <span style={{ fontSize: 11, color: "var(--t3)" }}>{icon}</span>
+                <span style={{ fontSize: 11, color: "var(--t2)" }}>{icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{val}</div>
-                  <div style={{ fontSize: 8, color: "var(--t3)" }}>{type}</div>
+                  <div style={{ fontSize: 10, color: "var(--t2)" }}>{type}</div>
                 </div>
               </div>
             ))}
@@ -313,7 +355,7 @@ export default function RightRail() {
                 Guides analyst to click a process node to load network context. */}
             {!selectedBehavior?.behavior_id && (
               <div style={{
-                marginTop: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)",
+                marginTop: 10, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t3)",
                 lineHeight: 1.5, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3,
               }}>
                 Click a process node in the tree to load network context.
@@ -324,16 +366,16 @@ export default function RightRail() {
             {selectedBehavior?.behavior_id && (() => {
               const nd = networkQuery.data
               if (networkQuery.isLoading) return (
-                <div style={{ marginTop: 10, fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+                <div style={{ marginTop: 10, fontSize: 10, fontFamily: "var(--mono)", color: "var(--t3)" }}>
                   Loading network context...
                 </div>
               )
               if (!nd?.has_network_data) return (
                 <div style={{ marginTop: 10, padding: "6px 8px", background: "var(--bg3)", borderRadius: 3, border: "1px solid var(--ln)" }}>
-                  <div style={{ fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
+                  <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
                     Network · no corroboration
                   </div>
-                  <div style={{ fontSize: 9, color: "var(--t3)" }}>No Suricata events in ±15min window.</div>
+                  <div style={{ fontSize: 10, color: "var(--t2)" }}>No Suricata events in ±15min window.</div>
                 </div>
               )
               const events = nd.network_events || []
@@ -342,16 +384,16 @@ export default function RightRail() {
               return (
                 <div style={{ marginTop: 10 }}>
                   <div style={{ height: 1, background: "var(--ln2)", marginBottom: 8 }} />
-                  <div style={{ fontSize: 8, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--teal)", textTransform: "uppercase", marginBottom: 6 }}>
+                  <div style={{ fontSize: 10, fontFamily: "var(--mono)", letterSpacing: "0.08em", color: "var(--t1)", textTransform: "uppercase", marginBottom: 6 }}>
                     Network · {nd.summary?.returned} suricata events
                   </div>
 
                   {/* Destination IPs */}
                   {uniqueIps.length > 0 && (
                     <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>DEST IPs</div>
+                      <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)", marginBottom: 4 }}>DEST IPs</div>
                       {uniqueIps.map((ip: string) => (
-                        <div key={ip} style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t2)", padding: "2px 6px", background: "var(--bg3)", borderRadius: 2, marginBottom: 2 }}>
+                        <div key={ip} style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)", padding: "2px 6px", background: "var(--bg3)", borderRadius: 2, marginBottom: 2 }}>
                           {ip}
                         </div>
                       ))}
@@ -361,24 +403,24 @@ export default function RightRail() {
                   {/* HTTP/fileinfo events */}
                   {events.length > 0 && (
                     <div style={{ marginBottom: 8 }}>
-                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>HTTP FLOWS ({events.length})</div>
+                      <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)", marginBottom: 4 }}>HTTP FLOWS ({events.length})</div>
                       {events.slice(0, 4).map((e: any, i: number) => (
                         <div key={i} style={{ marginBottom: 4, padding: "4px 6px", background: "var(--bg3)", borderRadius: 2, border: "1px solid var(--ln)" }}>
-                          <div style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--teal)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--blue)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {e.dest_ip}:{e.dest_port}
                           </div>
                           {e.url && (
-                            <div style={{ fontSize: 8, color: "var(--t3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 10, color: "var(--t3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                               {e.url}
                             </div>
                           )}
-                          <div style={{ fontSize: 8, color: "var(--t4)", fontFamily: "var(--mono)" }}>
+                          <div style={{ fontSize: 10, color: "var(--t3)", fontFamily: "var(--mono)" }}>
                             {new Date(e.timestamp).toISOString().slice(11, 19)}
                           </div>
                         </div>
                       ))}
                       {events.length > 4 && (
-                        <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)" }}>+{events.length - 4} more</div>
+                        <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>+{events.length - 4} more</div>
                       )}
                     </div>
                   )}
@@ -386,13 +428,13 @@ export default function RightRail() {
                   {/* Suricata alerts */}
                   {alerts.length > 0 && (
                     <div>
-                      <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)", marginBottom: 4 }}>ALERTS ({alerts.length})</div>
+                      <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)", marginBottom: 4 }}>ALERTS ({alerts.length})</div>
                       {alerts.slice(0, 3).map((a: any, i: number) => (
                         <div key={i} style={{ marginBottom: 4, padding: "4px 6px", background: "var(--red2)", borderRadius: 2, border: "1px solid var(--red3)" }}>
-                          <div style={{ fontSize: 9, color: "var(--red)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <div style={{ fontSize: 10, color: "var(--red)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {a.signature}
                           </div>
-                          <div style={{ fontSize: 8, color: "var(--t3)", fontFamily: "var(--mono)" }}>
+                          <div style={{ fontSize: 10, color: "var(--t2)", fontFamily: "var(--mono)" }}>
                             sid:{a.signature_id} · sev:{a.severity}
                           </div>
                         </div>

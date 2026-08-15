@@ -1,0 +1,8 @@
+frontend-react/
+screenshots/
+engine/
+__pycache__/
+*.pyc
+start_argus.ps1
+start_argus.bat
+ARGUS.md

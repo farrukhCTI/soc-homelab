@@ -26,6 +26,8 @@ Run:
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from elasticsearch import Elasticsearch
+from pydantic import BaseModel
+from typing import Optional, List, Literal
 from datetime import datetime
 import os
 
@@ -41,6 +43,170 @@ es = Elasticsearch(
 
 app = FastAPI(title="Argus SOC Console")
 
+
+# ---------------------------------------------------------------------------
+# GET /health — container healthcheck target only. Deliberately does not
+# touch Elasticsearch: it answers "is the API process up and serving,"
+# not "is the whole stack healthy." Compose already gates this service's
+# own startup on Elasticsearch being healthy (see docker-compose.yml).
+# ---------------------------------------------------------------------------
+@app.get("/health")
+async def health():
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------
+# S-1: Centralized field whitelists — define once, reference everywhere.
+# Prevents silent field drops when schema changes in behavior_detector.py.
+# Rule: if behavior_detector.py writes a new field, add it here.
+# Locked fields per schema (2026-05-17):
+#   behavior_detector.py writes: confidence, behavior_class, fire_reasons,
+#   priority_score, pid, user, profile, image, command_line, tactic,
+#   mitre_technique, description, severity, status, behavior_id, timestamp, host
+# ---------------------------------------------------------------------------
+BEHAVIOR_FIELDS = [
+    "behavior_id", "timestamp", "host", "image",
+    "command_line", "tactic", "mitre_technique",
+    "description", "severity", "status",
+    "confidence", "behavior_class", "fire_reasons",
+    "pid", "user", "profile", "priority_score",
+    "case_id",   # written by case_builder.py after grouping
+]
+
+CASE_FIELDS = [
+    "case_id", "status", "behavior_count",
+    "grouped_by", "blast_radius", "highest_severity",
+    "tactics_seen", "risk_score", "case_summary", "created_at",
+]
+
+
+# ---------------------------------------------------------------------------
+# Pydantic models — cases, behaviors, actions.
+#
+# These mirror BEHAVIOR_FIELDS / CASE_FIELDS above rather than replacing
+# them: the _source whitelists still control what's pulled from ES, these
+# models are the boundary contract for what the frontend actually receives
+# and, for POST /api/actions, what a caller is allowed to send. Scoped to
+# these three endpoint groups only — hunt/brief endpoints are unchanged.
+# ---------------------------------------------------------------------------
+class GroupedBy(BaseModel):
+    reason: str
+    time_window: Optional[str] = None
+    shared_host: Optional[str] = None
+    # case_builder.py's compute_grouped_by() can also produce these when a
+    # case's behaviors share a single IP or user — the old frontend
+    # GroupedBy type (types.ts) didn't have them, which is itself a small
+    # contract gap this model now makes explicit instead of silently
+    # dropping the fields.
+    shared_ip: Optional[str] = None
+    shared_user: Optional[str] = None
+
+
+class BlastRadius(BaseModel):
+    hosts_affected: int
+    users_involved: int
+    ips_contacted: int
+    processes_spawned: int
+
+
+class Case(BaseModel):
+    case_id: str
+    status: str
+    behavior_count: int
+    grouped_by: GroupedBy
+    blast_radius: BlastRadius
+    highest_severity: str
+    tactics_seen: List[str]
+    risk_score: float
+    case_summary: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class CasesResponse(BaseModel):
+    ok: bool = True
+    cases: List[Case]
+
+
+class BurstWindow(BaseModel):
+    count: int
+    span_seconds: int
+    start_ts: str
+    end_ts: str
+
+
+class Behavior(BaseModel):
+    behavior_id: str
+    timestamp: str
+    host: str
+    image: Optional[str] = None
+    command_line: Optional[str] = None
+    tactic: str
+    mitre_technique: Optional[str] = None
+    description: str
+    severity: str
+    status: str
+    confidence: Optional[str] = None
+    behavior_class: Optional[str] = None
+    fire_reasons: Optional[List[str]] = None
+    pid: Optional[int] = None
+    user: Optional[str] = None
+    profile: Optional[str] = None
+    priority_score: Optional[float] = None
+    case_id: Optional[str] = None
+
+
+class CaseBehaviorsResponse(BaseModel):
+    ok: bool = True
+    behaviors: List[Behavior]
+    burst_windows: List[BurstWindow]
+
+
+class BehaviorDetailResponse(BaseModel):
+    ok: bool = True
+    behavior: Behavior
+    case: Optional[Case] = None
+
+
+ActionType = Literal[
+    "ESCALATE", "BLOCK_IP", "NOTE", "RESOLVED",
+    "CONFIRMED_MALICIOUS", "FALSE_POSITIVE", "HUNT_PIVOT",
+]
+
+
+class ActionIn(BaseModel):
+    """POST /api/actions request body. `action` being a Literal means
+    Pydantic rejects anything outside the allowed set at the boundary,
+    with a 422 — replacing the manual `if action not in allowed` check
+    that used to live in the handler."""
+    behavior_id: Optional[str] = None
+    case_id: Optional[str] = None
+    action: ActionType
+    note: Optional[str] = None
+    actor: str = "analyst"
+
+
+class ActionOut(BaseModel):
+    action_id: str
+    behavior_id: Optional[str] = None
+    case_id: Optional[str] = None
+    action: str
+    note: Optional[str] = None
+    actor: str
+    timestamp: str
+
+
+class ActionsListResponse(BaseModel):
+    ok: bool = True
+    actions: List[ActionOut]
+    total: int
+    limit: int
+
+
+class ActionCreateResponse(BaseModel):
+    ok: bool = True
+    action_id: str
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -52,7 +218,7 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # GET /api/cases
 # ---------------------------------------------------------------------------
-@app.get("/api/cases")
+@app.get("/api/cases", response_model=CasesResponse)
 async def get_cases():
     """All cases sorted by risk_score descending."""
     try:
@@ -61,11 +227,7 @@ async def get_cases():
             body={
                 "size": 100,
                 "sort": [{"risk_score": {"order": "desc"}}],
-                "_source": [
-                    "case_id", "status", "behavior_count",
-                    "grouped_by", "blast_radius", "highest_severity",
-                    "tactics_seen", "risk_score", "case_summary", "created_at"
-                ]
+                "_source": CASE_FIELDS  # S-1: centralized whitelist
             }
         )
         cases = [hit["_source"] for hit in resp["hits"]["hits"]]
@@ -79,11 +241,15 @@ async def get_cases():
 # GET /api/cases/{case_id}/behaviors
 # Used by Screen 2 Panel A (timeline strip) — separate call from behavior context
 # ---------------------------------------------------------------------------
-@app.get("/api/cases/{case_id}/behaviors")
+@app.get("/api/cases/{case_id}/behaviors", response_model=CaseBehaviorsResponse)
 async def get_case_behaviors(case_id: str):
     """
     All behaviors for a case, sorted by timestamp ascending.
     Frontend calls this separately to build the timeline strip.
+
+    T1-1: Also computes burst_windows — periods where 3+ behaviors occur within 90s.
+    Each window: {count, span_seconds, start_ts, end_ts}.
+    Frontend surfaces the dominant burst as an amber banner on the Timeline tab.
     """
     try:
         resp = es.search(
@@ -92,17 +258,46 @@ async def get_case_behaviors(case_id: str):
                 "size": 1000,
                 "query": {"term": {"case_id.keyword": case_id}},
                 "sort": [{"timestamp": {"order": "asc"}}],
-                "_source": [
-                    "behavior_id", "timestamp", "host", "image",
-                    "command_line", "tactic", "mitre_technique",
-                    "description", "severity", "status",
-                    "confidence", "behavior_class", "fire_reasons",
-                    "pid", "user", "profile", "priority_score"
-                ]
+                "_source": BEHAVIOR_FIELDS  # S-1: centralized whitelist
             }
         )
         behaviors = [hit["_source"] for hit in resp["hits"]["hits"]]
-        return {"ok": True, "behaviors": behaviors}
+
+        # T1-1: Burst detection — sliding window over sorted timestamps.
+        # Burst = 3+ behaviors within any 90s window.
+        # Returns all non-overlapping burst windows, sorted by start_ts.
+        burst_windows = []
+        if len(behaviors) >= 3:
+            from datetime import datetime as _dt
+            times = []
+            for b in behaviors:
+                try:
+                    times.append(_dt.fromisoformat(b["timestamp"].replace("Z", "+00:00")))
+                except Exception:
+                    times.append(None)
+
+            valid = [(t, b) for t, b in zip(times, behaviors) if t is not None]
+            i = 0
+            while i < len(valid) - 2:
+                window_start_dt, _ = valid[i]
+                j = i + 1
+                while j < len(valid) and (valid[j][0] - window_start_dt).total_seconds() <= 90:
+                    j += 1
+                count = j - i
+                if count >= 3:
+                    window_end_dt = valid[j - 1][0]
+                    span_s = round((window_end_dt - window_start_dt).total_seconds())
+                    burst_windows.append({
+                        "count":        count,
+                        "span_seconds": span_s,
+                        "start_ts":     window_start_dt.isoformat().replace("+00:00", "Z"),
+                        "end_ts":       window_end_dt.isoformat().replace("+00:00", "Z"),
+                    })
+                    i = j  # skip past this burst — non-overlapping windows only
+                else:
+                    i += 1
+
+        return {"ok": True, "behaviors": behaviors, "burst_windows": burst_windows}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -129,6 +324,9 @@ async def get_case_summary(case_id: str):
                 "size": 1,
                 "query": {"term": {"case_id.keyword": case_id}},
                 "_source": [
+                    # S-1: intentional subset — only fields needed for summary prompt.
+                    # Not using CASE_FIELDS here; case_summary fetch is prompt-only,
+                    # not exposed to frontend as a case object.
                     "case_id", "tactics_seen", "highest_severity",
                     "behavior_count", "blast_radius", "grouped_by",
                     "risk_score", "case_summary"
@@ -210,7 +408,7 @@ Write 1-2 sentences only. Start with what happened, end with why it matters. No 
 # GET /api/behaviors/{behavior_id}
 # Primary context load for Screen 2
 # ---------------------------------------------------------------------------
-@app.get("/api/behaviors/{behavior_id}")
+@app.get("/api/behaviors/{behavior_id}", response_model=BehaviorDetailResponse)
 async def get_behavior(behavior_id: str):
     """
     Single behavior + parent case metadata.
@@ -227,7 +425,8 @@ async def get_behavior(behavior_id: str):
             index="argus-behaviors",
             body={
                 "size": 1,
-                "query": {"term": {"behavior_id.keyword": behavior_id}}
+                "query": {"term": {"behavior_id.keyword": behavior_id}},
+                "_source": BEHAVIOR_FIELDS  # S-1: centralized whitelist
             }
         )
         hits = resp["hits"]["hits"]
@@ -245,11 +444,7 @@ async def get_behavior(behavior_id: str):
                 body={
                     "size": 1,
                     "query": {"term": {"case_id.keyword": case_id}},
-                    "_source": [
-                        "case_id", "status", "behavior_count", "grouped_by",
-                        "blast_radius", "highest_severity", "tactics_seen",
-                        "risk_score", "case_summary", "created_at"
-                    ]
+                    "_source": CASE_FIELDS  # S-1: centralized whitelist
                 }
             )
             case_hits = case_resp["hits"]["hits"]
@@ -339,11 +534,15 @@ async def get_process_tree(behavior_id: str):
 #   - Empty result is valid data: return has_network_data=False, never raise error
 # ---------------------------------------------------------------------------
 @app.get("/api/behaviors/{behavior_id}/network_context")
-async def get_network_context(behavior_id: str):
+async def get_network_context(behavior_id: str, window_minutes: int = 15):
     """
     Cross-layer correlation for a behavior.
 
-    Fetches Suricata EVE events in a +-15min window around the behavior timestamp,
+    S-2: window_minutes is now a query param (default 15, max 60).
+    Allows analyst to widen the correlation window for slow dwell or jitter-based C2
+    that falls outside the default ±15min window.
+
+    Fetches Suricata EVE events in a ±window_minutes window around the behavior timestamp,
     filtered to victim IP (10.0.20.10) via src_ip, dest_ip, flow.src_ip, flow.dest_ip.
 
     Returns:
@@ -351,6 +550,7 @@ async def get_network_context(behavior_id: str):
       network_events: list of http/fileinfo events (url, dest_ip, dest_port, timestamp)
       alerts:  list of Suricata alert events (signature, signature_id, severity, src/dest)
       summary: returned, total_hits, alert_count, network_event_count, unique_ips
+      window_minutes: int — actual window used (capped at 60)
     """
     from datetime import timedelta
 
@@ -378,13 +578,15 @@ async def get_network_context(behavior_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Step 2: build +-15min window around behavior timestamp
+    # Step 2: build ±window_minutes window around behavior timestamp
+    # S-2: cap at 60min — wider windows return too much noise to be analytically useful
+    window_minutes = max(1, min(window_minutes, 60))
     try:
         # Parse ISO timestamp — handle both Z and +00:00 suffixes
         ts_clean = behavior_ts.replace("Z", "+00:00")
         center   = datetime.fromisoformat(ts_clean)
-        start_ts = (center - timedelta(minutes=15)).isoformat()
-        end_ts   = (center + timedelta(minutes=15)).isoformat()
+        start_ts = (center - timedelta(minutes=window_minutes)).isoformat()
+        end_ts   = (center + timedelta(minutes=window_minutes)).isoformat()
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Could not parse behavior timestamp: {str(e)}")
 
@@ -452,8 +654,9 @@ async def get_network_context(behavior_id: str):
                 "network_event_count":  0,
                 "unique_ips":           []
             },
-            "window": {"start": start_ts, "end": end_ts},
-            "error":  str(e)
+            "window":         {"start": start_ts, "end": end_ts},
+            "window_minutes": window_minutes,
+            "error":          str(e)
         }
 
     # Step 4: separate and normalise results by event_type
@@ -524,7 +727,8 @@ async def get_network_context(behavior_id: str):
         "window": {
             "start": start_ts,
             "end":   end_ts
-        }
+        },
+        "window_minutes": window_minutes  # S-2: echo back actual window used
     }
 
 
@@ -566,7 +770,7 @@ async def update_behavior_status(behavior_id: str, payload: dict):
 # GET /api/actions
 # Screen 3 — Actions Log, sorted by timestamp desc
 # ---------------------------------------------------------------------------
-@app.get("/api/actions")
+@app.get("/api/actions", response_model=ActionsListResponse)
 async def get_actions(limit: int = 200):
     """All analyst actions, newest first. Used by Screen 3 Actions Log."""
     try:
@@ -583,7 +787,13 @@ async def get_actions(limit: int = 200):
                 ]
             }
         )
-        actions = [hit["_source"] for hit in resp["hits"]["hits"]]
+        # action_id comes from the ES document _id, not _source — it was
+        # never being returned before, even though types.ts already
+        # declared Action.action_id as part of the shape.
+        actions = [
+            {**hit["_source"], "action_id": hit["_id"]}
+            for hit in resp["hits"]["hits"]
+        ]
         return {
             "ok":      True,
             "actions": actions,
@@ -599,32 +809,35 @@ async def get_actions(limit: int = 200):
 # POST /api/actions
 # Panel F — write analyst action to argus-actions index (audit trail)
 # ---------------------------------------------------------------------------
-@app.post("/api/actions")
-async def create_action(payload: dict):
+@app.post("/api/actions", response_model=ActionCreateResponse)
+async def create_action(payload: ActionIn):
+    # Closure actions are log-only — they do not mutate case status in ES.
+    # Acceptable for current scope. Operational closure state mutation is future work.
+    # T1-3: HUNT_PIVOT added — logged automatically on pivot arrival in HuntWorkbench.tsx
+    # (action-type validation now happens at the Pydantic boundary — ActionIn.action
+    # is a Literal of the same allowed set, so an invalid value 422s before
+    # reaching this body at all, instead of the handler checking it manually.)
+    doc = {
+        "behavior_id": payload.behavior_id,
+        "case_id":     payload.case_id,
+        "action":      payload.action,
+        "note":        payload.note,
+        "actor":       payload.actor,
+        "timestamp":   datetime.utcnow().isoformat() + "Z",
+    }
+
     try:
-        # Closure actions are log-only — they do not mutate case status in ES.
-        # Acceptable for current scope. Operational closure state mutation is future work.
-        allowed = {"ESCALATE", "BLOCK_IP", "NOTE", "RESOLVED", "CONFIRMED_MALICIOUS", "FALSE_POSITIVE"}
-        if payload.get("action") not in allowed:
-            return {"ok": False, "error": f"Invalid action. Must be one of: {', '.join(sorted(allowed))}"}
-
-        doc = {
-            "behavior_id": payload.get("behavior_id"),
-            "case_id":     payload.get("case_id"),
-            "action":      payload.get("action"),
-            "note":        payload.get("note"),
-            "actor":       payload.get("actor", "analyst"),
-            "timestamp":   datetime.utcnow().isoformat() + "Z",
-        }
-
         resp = es.index(index="argus-actions", document=doc)
-        if resp.get("result") not in ("created", "updated"):
-            return {"ok": False, "error": f"Unexpected ES result: {resp.get('result')}"}
-
-        return {"ok": True}
-
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if resp.get("result") not in ("created", "updated"):
+        raise HTTPException(status_code=500, detail=f"Unexpected ES result: {resp.get('result')}")
+
+    # This is the actual fix: return the real ES document _id as action_id
+    # instead of just {"ok": true}. Previously nothing came back to
+    # identify which action was just written.
+    return {"ok": True, "action_id": resp["_id"]}
 
 
 # ---------------------------------------------------------------------------
@@ -987,6 +1200,62 @@ Interpret these results for a SOC analyst."""
         return {"ok": False, "error": f"Claude returned non-JSON: {e}"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# S-4: Lightweight investigation state persistence
+# POST /api/session — write minimal state doc when analyst selects a case
+# GET  /api/session — return most recent session doc on app load
+#
+# Not full session persistence. Stores: case_id, active_tab, selected_behavior_id.
+# On load, frontend checks age — if < 4h, offers "Resume investigation of CASE-XXX?"
+# Index: argus-sessions (auto-created on first write)
+# ---------------------------------------------------------------------------
+@app.post("/api/session")
+async def save_session(payload: dict):
+    """
+    Write minimal investigation state to ES.
+    Called when analyst selects a case. Non-fatal on failure.
+    Payload: { case_id, active_tab?, selected_behavior_id? }
+    """
+    case_id = payload.get("case_id")
+    if not case_id:
+        return {"ok": False, "error": "case_id required"}
+    try:
+        doc = {
+            "case_id":              case_id,
+            "active_tab":           payload.get("active_tab", 0),
+            "selected_behavior_id": payload.get("selected_behavior_id"),
+            "saved_at":             datetime.utcnow().isoformat() + "Z",
+        }
+        es.index(index="argus-sessions", document=doc)
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/session")
+async def get_session():
+    """
+    Return most recent session doc. Frontend uses this on app load to offer resume prompt.
+    Returns ok: false if no session exists or index missing — both are non-fatal.
+    """
+    try:
+        resp = es.search(
+            index="argus-sessions",
+            body={
+                "size": 1,
+                "sort": [{"saved_at": {"order": "desc"}}],
+                "_source": ["case_id", "active_tab", "selected_behavior_id", "saved_at"]
+            }
+        )
+        hits = resp["hits"]["hits"]
+        if not hits:
+            return {"ok": False, "error": "No session found"}
+        return {"ok": True, "session": hits[0]["_source"]}
+    except Exception:
+        # Index doesn't exist yet or ES error — non-fatal, app loads normally
+        return {"ok": False, "error": "No session found"}
 
 
 # ---------------------------------------------------------------------------

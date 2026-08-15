@@ -9,11 +9,13 @@ Four stages only:
 
 Output contract (locked):
 {
-  "nodes": [{"id": str, "name": str, "full_path": str, "cmd": str, "ts": str, "ppid": str}],
+  "nodes": [{"id": str, "name": str, "full_path": str, "cmd": str, "ts": str, "ppid": str,
+             "integrity_level": str, "is_orphaned": bool}],
   "edges": [{"source": str, "target": str}],
   "root": str | null,
   "node_count": int,
   "behavior_pid": str | null,
+  "behavior_pid_matched": bool,
   "window": {"start": str, "end": str}
 }
 
@@ -101,6 +103,7 @@ def fetch_events(timestamp: str, host: str) -> tuple:
                 "winlog.event_data.ProcessId",
                 "winlog.event_data.ParentProcessId",
                 "winlog.event_data.ParentImage",
+                "winlog.event_data.IntegrityLevel",
                 "@timestamp"
             ]
         }
@@ -126,12 +129,13 @@ def build_pid_map(hits: list) -> dict:
         src = hit.get("_source", {})
         ed  = src.get("winlog", {}).get("event_data", {})
 
-        raw_image = ed.get("Image") or "unknown"
-        name      = raw_image.split("\\")[-1] if "\\" in raw_image else raw_image
-        pid       = str(ed.get("ProcessId") or "0")
-        ppid      = str(ed.get("ParentProcessId") or "0")
-        cmd       = ed.get("CommandLine") or ""
-        ts_str    = src.get("@timestamp", "")
+        raw_image       = ed.get("Image") or "unknown"
+        name            = raw_image.split("\\")[-1] if "\\" in raw_image else raw_image
+        pid             = str(ed.get("ProcessId") or "0")
+        ppid            = str(ed.get("ParentProcessId") or "0")
+        cmd             = ed.get("CommandLine") or ""
+        integrity_level = ed.get("IntegrityLevel") or ""   # T1-2: e.g. "System","High","Medium","Low"
+        ts_str          = src.get("@timestamp", "")
 
         if not pid or pid == "0":
             continue
@@ -146,13 +150,14 @@ def build_pid_map(hits: list) -> dict:
             ts_dt = datetime.min.replace(tzinfo=timezone.utc)
 
         pid_map[pid] = {
-            "id":        pid,
-            "name":      name,
-            "full_path": raw_image,
-            "cmd":       cmd,
-            "ts":        ts_str,
-            "ts_dt":     ts_dt,   # internal — stripped before API response
-            "ppid":      ppid
+            "id":              pid,
+            "name":            name,
+            "full_path":       raw_image,
+            "cmd":             cmd,
+            "ts":              ts_str,
+            "ts_dt":           ts_dt,        # internal — stripped before API response
+            "ppid":            ppid,
+            "integrity_level": integrity_level,  # T1-2: raw Sysmon IntegrityLevel value
         }
 
     return pid_map
@@ -175,6 +180,9 @@ def link_parent_child(pid_map: dict) -> tuple:
         pid  = node["id"]
         if ppid and ppid in pid_map and ppid != pid:
             edges.append({"source": ppid, "target": pid})
+            node["is_orphaned"] = False   # T1-2: parent visible in window
+        else:
+            node["is_orphaned"] = True    # T1-2: ppid not in pid_map — orphaned process
 
     return nodes, edges
 
@@ -243,9 +251,13 @@ def build_process_tree(behavior_id: str, timestamp: str, host: str,
     # Stage 4
     root = select_root(nodes, pid_map)
 
-    # behavior_pid: match by name AND closest timestamp to behavior timestamp
-    # Multiple cmd.exe/powershell.exe can exist — timestamp proximity breaks tie
+    # behavior_pid: match by name AND closest timestamp to behavior timestamp.
+    # Multiple cmd.exe/powershell.exe can exist — timestamp proximity breaks tie.
+    # T0-3: behavior_pid_matched tracks whether we found a real name match or fell
+    #        back to root. Frontend shows an amber warning when False.
     behavior_pid = root  # default fallback
+    behavior_pid_matched = False  # T0-3: False until a name match is confirmed
+
     if behavior_image:
         bname = behavior_image.split("\\")[-1].lower()
         try:
@@ -258,17 +270,23 @@ def build_process_tree(behavior_id: str, timestamp: str, host: str,
             # Pick candidate with timestamp closest to behavior timestamp
             candidates.sort(key=lambda n: abs((n["ts_dt"] - behavior_ts).total_seconds()))
             behavior_pid = candidates[0]["id"]
+            behavior_pid_matched = True   # T0-3: real name + timestamp match
         elif candidates:
             behavior_pid = candidates[0]["id"]
+            behavior_pid_matched = True   # T0-3: name match, no timestamp to compare
+
+    # If behavior_image was None or no candidates found, we kept root as fallback.
+    # behavior_pid_matched stays False — frontend renders the amber indicator.
 
     # Strip internal ts_dt before returning
     clean_nodes = _strip_internal_fields(nodes)
 
     return {
-        "nodes":        clean_nodes,
-        "edges":        edges,
-        "root":         root,
-        "node_count":   len(clean_nodes),
-        "behavior_pid": behavior_pid,
-        "window":       {"start": window_start, "end": window_end}
+        "nodes":               clean_nodes,
+        "edges":               edges,
+        "root":                root,
+        "node_count":          len(clean_nodes),
+        "behavior_pid":        behavior_pid,
+        "behavior_pid_matched": behavior_pid_matched,  # T0-3: bool, consumed by ProcessTree.tsx
+        "window":              {"start": window_start, "end": window_end}
     }

@@ -14,6 +14,19 @@ const STATE_COLOR: Record<string, string> = {
   investigating: "var(--blue)",
 }
 
+// T1-4: Severity band + confidence display helper.
+// Band = highest_severity from case doc. Confidence derived from score density.
+// Display only — underlying risk_score unchanged in ES.
+function severityBand(riskScore: number, behaviorCount: number, highestSeverity: string): { band: string; confidence: string; bandColor: string } {
+  const density = behaviorCount > 0 ? riskScore / behaviorCount : 0
+  const confidence = density > 300 ? "high" : density > 100 ? "medium" : "low"
+  const bandColor =
+    highestSeverity === "CRITICAL" ? "var(--red)" :
+    highestSeverity === "HIGH"     ? "var(--red)" :
+    highestSeverity === "MEDIUM"   ? "var(--amb)" : "var(--t3)"
+  return { band: highestSeverity, confidence, bandColor }
+}
+
 export default function LeftRail() {
   const { selectedCase, setSelectedCase, setSelectedBehavior } = useArgus()
   const [filter, setFilter] = useState<"ALL" | "HIGH" | "MED">("ALL")
@@ -43,7 +56,7 @@ export default function LeftRail() {
     }}>
       <div style={{ padding: "10px 12px 6px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <span style={{ fontSize: 11, fontWeight: 600, color: "var(--t2)" }}>Case queue</span>
-        <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>{visibleCases.length} open</span>
+        <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>{visibleCases.length} open</span>
       </div>
 
       <div style={{ padding: "0 12px 8px", display: "flex", gap: 4, borderBottom: "1px solid var(--ln)" }}>
@@ -52,7 +65,7 @@ export default function LeftRail() {
           const isActive = filter === key
           return (
             <span key={f} onClick={() => setFilter(key)} style={{
-              fontSize: 9, fontFamily: "var(--mono)", padding: "3px 6px", borderRadius: 2, cursor: "pointer",
+              fontSize: 10, fontFamily: "var(--mono)", padding: "3px 6px", borderRadius: 2, cursor: "pointer",
               color: isActive ? (f === "HIGH" ? "var(--red)" : f === "MED" ? "var(--amb)" : "var(--t2)") : "var(--t3)",
               border: isActive ? (f === "HIGH" ? "1px solid var(--red3)" : f === "MED" ? "1px solid var(--amb3)" : "1px solid var(--ln3)") : "1px solid var(--ln2)",
               background: isActive ? (f === "HIGH" ? "var(--red2)" : f === "MED" ? "var(--amb2)" : "var(--bg3)") : "transparent",
@@ -65,7 +78,6 @@ export default function LeftRail() {
       <div style={{ flex: 1, overflowY: "auto" }}>
         {visibleCases.map((c) => {
           const isHigh = c.highest_severity === "HIGH" || c.highest_severity === "CRITICAL"
-          const col = isHigh ? "var(--red)" : "var(--amb)"
           const sel = selectedCase?.case_id === c.case_id
           const stateCol = STATE_COLOR[c.status?.toLowerCase()] || "var(--t3)"
 
@@ -88,10 +100,16 @@ export default function LeftRail() {
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                <span style={{ fontSize: 9, fontFamily: "var(--mono)", color: "var(--t3)" }}>{c.case_id}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, fontFamily: "var(--mono)", color: col }}>
-                  {(c.risk_score / 1000).toFixed(1)}k
-                </span>
+                <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)" }}>{c.case_id}</span>
+                {/* T1-4: confidence only — severity badge below already shows the band */}
+                {(() => {
+                  const sb = severityBand(c.risk_score, c.behavior_count, c.highest_severity)
+                  return (
+                    <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: "var(--t3)" }}>
+                      {sb.confidence}
+                    </span>
+                  )
+                })()}
               </div>
 
               {/* FIX-12: Date prefix added before time window */}
@@ -101,12 +119,12 @@ export default function LeftRail() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
                 <span style={{
-                  fontSize: 8, fontWeight: 700, letterSpacing: "0.05em", padding: "2px 5px", borderRadius: 2,
+                  fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", padding: "2px 5px", borderRadius: 2,
                   color: isHigh ? "var(--red)" : "var(--amb)",
                   border: isHigh ? "1px solid var(--red3)" : "1px solid var(--amb3)",
                   background: isHigh ? "var(--red2)" : "var(--amb2)",
                 }}>{c.highest_severity}</span>
-                <span style={{ fontSize: 8, fontFamily: "var(--mono)", color: stateCol }}>
+                <span style={{ fontSize: 10, fontFamily: "var(--mono)", color: stateCol }}>
                   {c.status.toUpperCase()}
                 </span>
               </div>
@@ -115,8 +133,8 @@ export default function LeftRail() {
               <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 2 }}>
                 {(c.tactics_seen || []).slice(0, 3).map((t: string) => (
                   <span key={t} style={{
-                    fontSize: 8, fontFamily: "var(--mono)", color: "var(--t3)",
-                    padding: "1px 4px", border: "1px solid var(--ln2)", borderRadius: 2,
+                    fontSize: 10, fontFamily: "var(--mono)", color: "var(--t2)",
+                    padding: "1px 4px", border: "1px solid var(--ln3)", borderRadius: 2,
                   }}>
                     {t}
                   </span>

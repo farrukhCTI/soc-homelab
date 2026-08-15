@@ -52,18 +52,26 @@ def get_last_case_number():
 
 def get_unassigned_behaviors():
     """Get all behaviors without case_id assigned."""
-    resp = es.search(
-        index="argus-behaviors",
-        body={
-            "size": 1000,
-            "query": {
-                "bool": {
-                    "must_not": {"exists": {"field": "case_id"}}
-                }
-            },
-            "sort": [{"timestamp": {"order": "asc"}}]
-        }
-    )
+    try:
+        resp = es.search(
+            index="argus-behaviors",
+            body={
+                "size": 1000,
+                "query": {
+                    "bool": {
+                        "must_not": {"exists": {"field": "case_id"}}
+                    }
+                },
+                "sort": [{"timestamp": {"order": "asc"}}]
+            }
+        )
+    except Exception:
+        # argus-behaviors doesn't exist yet — behavior_detector hasn't
+        # written anything (fresh cluster, or no Winlogbeat data yet).
+        # Same tolerance as get_last_case_number() above.
+        print("[INFO] argus-behaviors index not found, nothing to group yet")
+        return []
+
     behaviors = [hit['_source'] for hit in resp['hits']['hits']]
     behavior_docs = [(hit['_id'], hit['_source']) for hit in resp['hits']['hits']]
     print(f"[INFO] Found {len(behaviors)} behaviors without case_id")
@@ -262,7 +270,8 @@ def run_once():
     # Group by host + 10min window
     groups = group_behaviors(behavior_docs)
     
-    # Filter out groups that don't meet signal thresholds.
+    # Filter out groups that don't meet case formation thresholds.
+    # Signals below these thresholds are marked NOISE — not promoted to behaviors.
     # MIN_CASE_SIZE=5: noise bursts (1-4 behaviors) don't form cases.
     # MIN_TACTICS=2: single-tactic spam (pure DISCOVERY flood) doesn't form a case.
     # is_dense: at least 3 events within 2 minutes — burst vs slow scatter.
