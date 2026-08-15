@@ -1,4 +1,4 @@
-# IR-006: PowerShell-Originated Payload Retrieval and Persistence
+# IR-006: PowerShell Host Discovery and Payload Retrieval
 
 **Classification:** Controlled Simulation  
 **Analyst:** Farrukh Ejaz  
@@ -9,20 +9,20 @@
 **Risk Score:** 5,109  
 **Host:** DESKTOP-MM1REM9 (10.0.20.10) — Windows 10 Pro 22H2  
 **Attacker Host:** Kali Linux (10.0.30.10) — HTTP server on port 8080  
-**MITRE ATT&CK:** T1059.001, T1105, T1053.005, T1082, T1016, T1049, T1033  
+**MITRE ATT&CK:** T1059.001, T1105, T1082, T1016, T1049, T1033  
 **Telemetry Sources:** Sysmon via Elastic Agent (EDR), Suricata via Filebeat (NDR)
 
 ---
 
 ## 1. Executive Summary
 
-On 2026-05-16, a controlled attack simulation was executed on Windows 10 endpoint DESKTOP-MM1REM9. The scenario covered five stages: host discovery, payload retrieval via PowerShell HTTP, LOLBin execution (blocked by AppControl), encoded PowerShell execution, and persistence via registry run key and scheduled task.
+On 2026-05-16, a controlled attack simulation was executed on Windows 10 endpoint DESKTOP-MM1REM9. This report covers the two stages with independently verifiable telemetry: host discovery and payload retrieval via PowerShell HTTP.
 
-Upstream Sysmon and Elastic detections were ingested and normalized into a correlated case containing 26 behaviors across a 30-minute window. The case was classified HIGH severity with a risk score of 5,109, covering three tactic categories: EXECUTION, PERSISTENCE, and DISCOVERY.
+Upstream Sysmon and Elastic detections were ingested and normalized into a correlated case (CASE-011) containing 26 behaviors across a 30-minute window, classified HIGH severity with a risk score of 5,109 and tagged across three tactic categories: EXECUTION, PERSISTENCE, and DISCOVERY. These figures are the Argus case classification itself (Section 4.1, confirmed directly by screenshot). This report independently walks through and evidences only the discovery and payload-retrieval activity within that case — it does not confirm what specifically drove the PERSISTENCE tag, since no supporting telemetry for later-stage activity is available (see Section 3).
 
 Cross-layer analysis confirmed that 6 Suricata network events from an independent NDR pipeline corroborated EDR-observed PowerShell HTTP activity. Three repeated GET requests to `/payload.txt` on 10.0.30.10:8080 were recorded independently by both sensors. Matching events across both pipelines on the same IPs and timestamps constitutes dual-source confirmation with no shared data path.
 
-**Assessment:** The observed activity is consistent with early-stage post-compromise behavior commonly seen prior to payload deployment or operator persistence establishment. No credential access, lateral movement, or exfiltration was observed. Persistence was confirmed via scheduled task and registry run key.
+**Assessment:** The observed activity is consistent with early-stage reconnaissance and payload staging. No credential access, lateral movement, execution beyond the observed process launches, or persistence was independently confirmed in this investigation.
 
 ---
 
@@ -32,26 +32,20 @@ Cross-layer analysis confirmed that 6 Suricata network events from an independen
 |---|---|
 | Victim host | DESKTOP-MM1REM9, Windows 10 Pro 22H2, 10.0.20.10 |
 | Attacker host | Kali Linux, 10.0.30.10, python3 -m http.server 8080 |
-| EDR pipeline | Sysmon (EID 1/3/10/11/13) via Elastic Agent to Elasticsearch 8.17.0 |
+| EDR pipeline | Sysmon (EID 1/3) via Elastic Agent to Elasticsearch 8.17.0 |
 | NDR pipeline | Suricata EVE JSON via Filebeat 7.14.0 standalone on pfSense FreeBSD |
 | ES indices | logs-winlog.winlog-default (EDR), filebeat-7.14.0-2026.05.16 (NDR) |
-| AppControl policy | Active. Certutil.exe blocked at stage 3. 4 of 5 stages executed. |
 
 ---
 
-## 3. Attack Scenario
+## 3. Confirmed Activity
 
-Five-stage chained simulation executed via IR-001-Scenario.ps1.
-
-| Stage | Action | Result |
+| Activity | Action | Evidence |
 |---|---|---|
-| 1. Discovery | whoami, hostname, ipconfig, netstat, net user, systeminfo | Completed |
-| 2. Payload retrieval | Invoke-WebRequest x3 to 10.0.30.10:8080/payload.txt | Completed |
-| 3. LOLBin execution | certutil.exe -decode (T1218.003) | Blocked by AppControl |
-| 4. Encoded PowerShell | powershell.exe -EncodedCommand | Completed |
-| 5. Persistence | reg add Run key + schtasks /create | Completed |
+| Discovery | whoami, hostname, ipconfig, netstat, net, systeminfo | Process tree (Section 4.2), timeline (Section 5) |
+| Payload retrieval | Invoke-WebRequest x3 to 10.0.30.10:8080/payload.txt | Cross-layer corroboration (Section 4.3), hunt pivot (Section 4.4) |
 
-Certutil was blocked by AppControl at stage 3. The remaining four stages produced sufficient telemetry for a full detection and investigation workflow.
+This report covers only the activity above, each independently confirmed by both a screenshot and a matching data point from at least one telemetry pipeline. Earlier drafts of this report also described LOLBin execution, encoded PowerShell execution, and persistence via registry run key and scheduled task. Those were removed: no screenshot, raw event, or queryable telemetry in this repository supports them, and the underlying raw Sysmon/Suricata indices for this case no longer exist to check.
 
 ---
 
@@ -89,13 +83,13 @@ The process tree rendered the full execution chain rooted at `powershell.exe` (p
 
 ```
 powershell.exe (pid 9160) — C:\Windows\System32\WindowsPowerShell\v1.0\   [EXECUTION]
-├── whoami.exe       (pid 38324)    C:\Windows\system32\                   [DISCOVERY]
-├── HOSTNAME.EXE     (pid 11856)    C:\Windows\system32\                   [DISCOVERY]
+├── whoami.exe       (pid 10324)    C:\Windows\system32\                   [DISCOVERY]
+├── HOSTNAME.EXE     (pid 11056)    C:\Windows\system32\                   [DISCOVERY]
 ├── ipconfig.exe     (pid 10624)    C:\Windows\system32\                   [DISCOVERY]
 ├── NETSTAT.EXE      (pid 10076)    C:\Windows\system32\                   [DISCOVERY]
 ├── net.exe          (pid 7500)     C:\Windows\system32\                   [DISCOVERY]
-│   └── net1.exe     (pid 9052)     C:\Windows\system32\                   [OTHER]
-└── systeminfo.exe   (pid 7048)     C:\Windows\system32\                   [DISCOVERY]
+│   └── net1.exe     (pid 9692)     C:\Windows\system32\                   [OTHER]
+└── systeminfo.exe   (pid 7648)     C:\Windows\system32\                   [DISCOVERY]
 ```
 
 **net1.exe handling:** `net1.exe` appeared in raw Sysmon EID 1 telemetry and was rendered in the process tree as an "Other process" node. No behavior record matched it and it received no risk contribution. This is correct: `net1.exe` is an internal subprocess spawned by `net.exe` and is not independently malicious. Its presence in the tree confirms telemetry fidelity without inflating the case score.
@@ -147,12 +141,13 @@ From the cross-layer view, the remote IP `10.0.30.10` was used as a pivot to the
 | OneDrive.exe | 100 | 41 | Expected, Microsoft telemetry |
 | pwsh.exe (PowerShell 7) | 3 | 1 | Review required |
 | svchost.exe | 3 | 1 | Review required |
+| OneDrive-related process (path truncated in source screenshot, not independently confirmed) | 3 | 3 | Expected, Microsoft telemetry |
 | powershell.exe (v1.0) | 3 | 1 | Confirmed, matches NDR flows |
-| rundll32.exe | 3 | 1 | Unexplained, follow-up required |
+| rundll32.exe | 1 | 1 | Unexplained, follow-up required |
 
 `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` shows 3 connections to 1 unique IP. This matches the 3 GET requests to 10.0.30.10:8080 observed in the NDR pipeline. The process responsible for the network activity is confirmed.
 
-`rundll32.exe` with 3 outbound connections to a single IP was not part of the planned scenario. Destination IP was not verified during this session and requires follow-up (see Section 8, Gap 4).
+`rundll32.exe` with 1 outbound connection to a single IP was not part of the planned scenario. Destination IP was not verified during this session and requires follow-up (see Section 8, Gap 3).
 
 ---
 
@@ -175,25 +170,21 @@ An ESCALATE action was logged against CASE-011 following the investigation.
 
 | Timestamp | Source | EID | Event | PID | MITRE |
 |---|---|---|---|---|---|
-| 07:15:00 | Sysmon EDR | 1 | powershell.exe launched | 9160 | T1059.001 |
-| 07:15:xx | Sysmon EDR | 1 | whoami.exe spawned by powershell.exe | 38324 | T1033 |
-| 07:16:xx | Sysmon EDR | 1 | HOSTNAME.EXE spawned by powershell.exe | 11856 | T1082 |
+| 07:15:xx | Sysmon EDR | 1 | powershell.exe launched | 9160 | T1059.001 |
+| 07:15:xx | Sysmon EDR | 1 | whoami.exe spawned by powershell.exe | 10324 | T1033 |
+| 07:16:xx | Sysmon EDR | 1 | HOSTNAME.EXE spawned by powershell.exe | 11056 | T1082 |
 | 07:17:xx | Sysmon EDR | 1 | ipconfig.exe spawned by powershell.exe | 10624 | T1016 |
 | 07:18:xx | Sysmon EDR | 1 | NETSTAT.EXE spawned by powershell.exe | 10076 | T1049 |
 | 07:19:xx | Sysmon EDR | 1 | net.exe spawned by powershell.exe | 7500 | T1082 |
-| 07:19:xx | Sysmon EDR | 1 | net1.exe spawned by net.exe | 9052 | (suppressed) |
-| 07:20:xx | Sysmon EDR | 1 | systeminfo.exe spawned by powershell.exe | 7048 | T1082 |
+| 07:19:xx | Sysmon EDR | 1 | net1.exe spawned by net.exe | 9692 | (suppressed) |
+| 07:20:xx | Sysmon EDR | 1 | systeminfo.exe spawned by powershell.exe | 7648 | T1082 |
 | 07:37:xx | Sysmon EDR | 3 | powershell.exe outbound to 10.0.30.10:8080 | 9160 | T1105 |
 | 07:37:xx | Suricata NDR | http | GET /payload.txt, 10.0.20.10 to 10.0.30.10:8080, HTTP 200 | n/a | T1105 |
 | 07:37:xx | Suricata NDR | http | GET /payload.txt repeated x3, UA: WindowsPowerShell/5.1 | n/a | T1105 |
 | 07:37:xx | Suricata NDR | fileinfo | payload.txt transfer recorded | n/a | T1105 |
-| 07:38:xx | Sysmon EDR | 1 | powershell.exe -EncodedCommand executed | n/a | T1059.001 |
-| 07:40:xx | Sysmon EDR | 13 | Registry Run key written | n/a | T1547.001 |
-| 07:44:xx | Sysmon EDR | 1 | schtasks.exe /create executed | n/a | T1053.005 |
-| 07:44:xx | Sysmon EDR | 11 | Scheduled task file created under System32\Tasks | n/a | T1053.005 |
 | 12:37:09 | Argus | n/a | Analyst logs ESCALATE on CASE-011 | n/a | n/a |
 
-Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approximate. Exact values are available in raw Sysmon EID 1 records under `raw-events/`.
+Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approximate, based on the behavior timeline strip in the Argus process-tree screenshots. No raw Sysmon EID 1 export exists for this case to confirm exact values — unlike IR-002 through IR-005, this report currently has no `raw-events/` folder.
 
 ---
 
@@ -207,7 +198,7 @@ Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approxima
 | Mozilla/5.0 ... WindowsPowerShell/5.1.19041.6456 | User-Agent | PowerShell HTTP UA string |
 | powershell.exe pid 9160 | Process | Root of execution chain, confirmed outbound initiator |
 | C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe | Path | Full path of confirmed initiator |
-| rundll32.exe | Process | 3 outbound connections, destination unverified |
+| rundll32.exe | Process | 1 outbound connection, destination unverified |
 
 ---
 
@@ -216,12 +207,11 @@ Note: Sub-minute timestamps within the 07:15-07:20 discovery stage are approxima
 This was a controlled simulation. The following actions apply if the activity were unauthorized:
 
 - Isolate host from network pending scope assessment
-- Remove the scheduled task created at stage 5
-- Delete the Run key persistence entry
-- Locate and remove any file written during the payload retrieval stage
+- Locate and remove any file written during payload retrieval
 - Review outbound connections to 10.0.30.10 across the environment for additional affected hosts
 - Validate no secondary payload was executed following the 3x retrieval
 - Reset credentials for the active user session if privilege context is uncertain
+- Independently verify persistence mechanisms (scheduled tasks, registry run keys) — this investigation did not check for them, so their presence or absence is unconfirmed, not ruled out
 
 ---
 
@@ -254,17 +244,9 @@ alert http 10.0.20.0/24 any -> any any (msg:"PowerShell User-Agent in HTTP traff
 
 ---
 
-### Gap 3: AppControl block not captured in telemetry
+### Gap 3: rundll32.exe outbound connections unresolved
 
-AppControl blocked certutil.exe but no event was collected by the EDR pipeline confirming the block. If AppControl were disabled, certutil execution would proceed without any detection.
-
-**Fix:** Enable AppLocker or WDAC operational log collection. The relevant Windows event channel is `Microsoft-Windows-AppLocker/EXE and DLL`. Additionally, add a Sysmon EID 3 detection profile for certutil making outbound connections to non-Microsoft destinations, which would catch the network attempt regardless of whether the execution block is logged.
-
----
-
-### Gap 4: rundll32.exe outbound connections unresolved
-
-Hunt results showed `rundll32.exe` with 3 outbound connections to a single IP. This was not part of the planned scenario and the destination IP was not verified during this session.
+Hunt results showed `rundll32.exe` with 1 outbound connection to a single IP. This was not part of the planned scenario and the destination IP was not verified during this session.
 
 **Follow-up:** Pull EID 3 events for rundll32.exe within the case time window, confirm destination IP, and cross-reference against known Windows or CDN ranges. If the destination is outside expected ranges, treat as a secondary lead and extend the investigation scope.
 
